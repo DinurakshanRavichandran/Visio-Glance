@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 
 @Component({
@@ -20,23 +20,40 @@ export class RegisterComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]]
-    }, { validator: this.passwordMatchValidator });
+    });
+
+    // Apply custom password match validator
+    this.registerForm.get('confirmPassword')?.setValidators([
+      Validators.required,
+      this.passwordMatchValidator.bind(this)
+    ]);
   }
 
   // Custom validator to check if passwords match
-  passwordMatchValidator(formGroup: FormGroup) {
-    const password = formGroup.get('password')?.value;
-    const confirmPassword = formGroup.get('confirmPassword')?.value;
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = this.registerForm?.get('password')?.value;
+    const confirmPassword = control.value;
     return password === confirmPassword ? null : { mismatch: true };
   }
 
   onRegister() {
     this.submitted = true;
 
-    if (this.registerForm.valid) {
-      console.log('Registration Successful:', this.registerForm.value);
-      alert('Registration Successful!');
-      this.router.navigate(['/login']); // Redirect to login after successful registration
+    if (this.registerForm.invalid) {
+      return; // Stop execution if form is invalid
     }
+
+    console.log('Registration Successful:', this.registerForm.value);
+    alert('Registration Successful!');
+
+    // Simulating a small delay before navigating (UX improvement)
+    setTimeout(() => {
+      this.router.navigate(['/login']);
+    }, 1000);
+  }
+
+  // Helper function to get form controls
+  get form() {
+    return this.registerForm.controls;
   }
 }
