@@ -1,6 +1,6 @@
 .hero {
     position: relative;
-    background: url('assets/hero-bg.jpg') center/cover no-repeat;
+    /* background: url('assets/hero-bg.jpg') center/cover no-repeat; */
     height: 100vh;
     text-align: center;
     color: white;

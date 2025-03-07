@@ -32,7 +32,7 @@
           </form>
           <!-- Sign-up link -->
           <p class="signup-text">
-              Don't have an account? <a routerLink="/Register">Sign up</a>
+              Don't have an account? <a [routerLink]="['/register']">Sign up</a>
           </p>
           <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
       </div>
