@@ -1,0 +1,41 @@
+/* General Styling */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 20%;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    padding: 20px;
+    color: white;
+}
+
+.sidebar h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.sidebar ul li a:hover {
+    text-decoration: underline;
+}
