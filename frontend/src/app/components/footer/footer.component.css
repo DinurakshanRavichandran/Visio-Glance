@@ -1,0 +1,85 @@
+/* Footer Styling */
+footer {
+    padding: 70px 0 30px;
+    background-color: #1a2b4c; /* Navy Blue */
+    color: #cfd8e3; /* Light blue-gray */
+}
+
+/* Wrapper */
+.wrapper {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+/* Footer Logo and Description */
+.footer-logo {
+    width: 350px;
+}
+
+.footer-logo .logo {
+    font-size: 24px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.footer-logo .color {
+    color: #3f82e2; /* Stylish blue accent */
+}
+
+.footer-description {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #b0c4de;
+    margin-top: 10px;
+}
+
+/* Footer Links */
+#footer-links {
+    display: flex;
+    gap: 50px;
+}
+
+#footer-links ul {
+    list-style: none;
+}
+
+#footer-links ul li {
+    margin: 8px 0;
+}
+
+/* Footer Headings */
+#footer-links ul li h5 {
+    font-size: 16px;
+    color: #ffffff;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+/* Footer Links */
+#footer-links ul li a {
+    text-decoration: none;
+    color: #cfd8e3;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s ease-in-out;
+}
+
+#footer-links ul li a:hover {
+    color: #3f82e2; /* Blue accent */
+}
+
+/* Footer Bottom */
+.footer-bottom {
+    text-align: center;
+    padding-top: 30px;
+    font-size: 14px;
+    color: #b0c4de;
+    border-top: 1px solid #2c3e50;
+    margin-top: 30px;
+}
