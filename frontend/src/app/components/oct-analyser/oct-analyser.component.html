@@ -1,1 +1,40 @@
-<p>oct-analyser works!</p>
+<div class="upload-section">
+  <h2>Upload OCT Image</h2>
+  <p>
+    The Optical Coherence Tomography (OCT) scanner helps diagnose retinal diseases such as macular degeneration and diabetic retinopathy. Upload an OCT scan for AI-based analysis.
+  </p>
+
+  <!-- Upload Box -->
+  <div class="upload-box" (click)="fileInput.click()">
+    <input
+      type="file"
+      #fileInput
+      (change)="onFileSelected($event)"
+      accept="image/*"
+      style="display: none;"
+    />
+    <label>Choose an OCT Image</label>
+  </div>
+
+  <p id="file-name">{{ fileName || 'No file selected' }}</p>
+
+  <!-- Display Uploaded Image -->
+  <div *ngIf="imagePreview" id="image-preview-container">
+    <h3>Uploaded OCT Image</h3>
+    <img [src]="imagePreview" alt="Uploaded Image" id="image-preview" />
+  </div>
+
+  <!-- Loading Animation -->
+  <div *ngIf="isLoading" id="loading">
+    <div class="spinner"></div>
+    <p>Processing Image...</p>
+  </div>
+
+  <!-- AI Analysis Result -->
+  <div *ngIf="diagnosis" id="result-container">
+    <h3>AI Diagnosis</h3>
+    <p id="diagnosis-text">{{ diagnosis }}</p>
+    <h3>Processed Image</h3>
+    <img [src]="processedImage" alt="Processed Image" id="processed-image" />
+  </div>
+</div>
