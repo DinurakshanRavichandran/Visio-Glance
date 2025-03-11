@@ -1,1 +1,40 @@
-<p>fundus-analyser works!</p>
+<div class="upload-section">
+  <h2>Upload Fundus Image</h2>
+  <p>
+    The Fundus scanner helps diagnose retinal diseases such as diabetic retinopathy and glaucoma. Upload a fundus image for AI-based analysis.
+  </p>
+
+  <!-- Upload Box -->
+  <div class="upload-box" (click)="fileInput.click()">
+    <input
+      type="file"
+      #fileInput
+      (change)="onFileSelected($event)"
+      accept="image/*"
+      style="display: none;"
+    />
+    <label>Choose a Fundus Image</label>
+  </div>
+
+  <p id="file-name">{{ fileName || 'No file selected' }}</p>
+
+  <!-- Display Uploaded Image -->
+  <div *ngIf="imagePreview" id="image-preview-container">
+    <h3>Uploaded Fundus Image</h3>
+    <img [src]="imagePreview" alt="Uploaded Image" id="image-preview" />
+  </div>
+
+  <!-- Loading Animation -->
+  <div *ngIf="isLoading" id="loading">
+    <div class="spinner"></div>
+    <p>Processing Image...</p>
+  </div>
+
+  <!-- AI Analysis Result -->
+  <div *ngIf="diagnosis" id="result-container">
+    <h3>AI Diagnosis</h3>
+    <p id="diagnosis-text">{{ diagnosis }}</p>
+    <h3>Processed Image</h3>
+    <img [src]="processedImage" alt="Processed Image" id="processed-image" />
+  </div>
+</div>
