@@ -39,3 +39,33 @@ body, html {
 .sidebar ul li a:hover {
     text-decoration: underline;
 }
+body {
+    display: flex;
+    height: 100vh;
+    background: #f4f4f4;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+}
+
+.sidebar {
+    width: 250px; /* Fixed width */
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    padding: 20px;
+    color: white;
+    height: 100vh; /* Ensure it takes full height */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.content {
+    flex-grow: 1; /* Takes remaining space */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    text-align: center;
+    padding: 30px;
+}
