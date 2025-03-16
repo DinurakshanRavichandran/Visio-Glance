@@ -69,3 +69,40 @@ body {
     text-align: center;
     padding: 30px;
 }
+.sidebar {
+    width: 250px; /* Fixed width */
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    padding: 20px;
+    color: white;
+    height: 100vh; /* Full viewport height */
+    flex-shrink: 0; /* Prevent shrinking */
+  }
+  
+  .sidebar h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .sidebar ul li {
+    margin: 15px 0;
+  }
+  
+  .sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    transition: 0.3s;
+  }
+  
+  .sidebar ul li a:hover {
+    text-decoration: underline;
+  }
+  .sidebar ul li a.active {
+    font-weight: bold;
+    text-decoration: underline;
+  }

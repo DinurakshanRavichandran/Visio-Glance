@@ -1,2 +1,10 @@
-<app-navbar></app-navbar>
-
+<div class="system-container">
+    <app-navbar></app-navbar> <!-- Navbar at the top -->
+    <div class="main-content">
+      <app-sidebar></app-sidebar> <!-- Sidebar on the left -->
+      <div class="content-area">
+        <router-outlet></router-outlet> <!-- Components load here -->
+      </div>
+    </div>
+    <app-footer></app-footer> <!-- Footer at the bottom -->
+  </div>

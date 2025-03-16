@@ -1,0 +1,20 @@
+.system-container {
+    display: flex;
+    flex-direction: column; /* Stack navbar, main-content, and footer vertically */
+    height: 100vh; /* Full viewport height */
+  }
+  
+  .main-content {
+    display: flex;
+    flex-grow: 1; /* Takes remaining space between navbar and footer */
+  }
+  
+  .content-area {
+    flex-grow: 1; /* Takes remaining space after sidebar */
+    padding: 20px; /* Add padding as needed */
+    overflow-y: auto; /* Add scroll if content overflows */
+  }
+  
+  app-footer {
+    flex-shrink: 0; /* Prevent footer from shrinking */
+  }
