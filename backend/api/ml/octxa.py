@@ -74,5 +74,5 @@ def explain_with_shap(image_path):
         "shap_explanation": "SHAP explanation generated",
         "shap_image_path": image_path  # Similar to LIME, update to save heatmap if needed
     }
-explain_with_lime(r"C:\Users\Dinurakshan\OneDrive\Pictures\Screenshots\Screenshot 2025-03-16 215931.png")
-explain_with_shap(r"C:\Users\Dinurakshan\OneDrive\Pictures\Screenshots\Screenshot 2025-03-16 215931.png")
+explain_with_lime(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
+explain_with_shap(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")

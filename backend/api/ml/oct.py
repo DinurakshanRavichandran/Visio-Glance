@@ -43,10 +43,11 @@ def predict_image(image_path):
     predictions = model.predict(image)
     predicted_class = np.argmax(predictions, axis=-1)[0]
     confidence = float(np.max(predictions))
+    print(f"Confidence: {confidence}, Predicted class: {predicted_class}")
 
     return {
         "prediction": class_labels[predicted_class],
         "confidence": confidence
     }
 
-predict_image(r"C:\Users\Dinurakshan\OneDrive\Pictures\Screenshots\Screenshot 2025-03-16 215931.png")
+predict_image(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
