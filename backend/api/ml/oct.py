@@ -35,7 +35,7 @@ def preprocess_image(image_path):
     # Expand dimensions to match model input shape
     return np.expand_dims(image, axis=0)
 
-def predict_image(image_path):
+def predict_oct(image_path):
     """
     Predicts the class of an image and returns JSON response.
     """
@@ -50,4 +50,4 @@ def predict_image(image_path):
         "confidence": confidence
     }
 
-predict_image(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
+#predict_image(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")

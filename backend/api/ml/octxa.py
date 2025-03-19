@@ -15,7 +15,7 @@ model = load_model(MODEL_PATH, compile=False)
 # Class labels
 class_labels = ["CNV", "DME", "DRUSEN", "NORMAL"]
 
-def explain_with_lime(image_path):
+def explain_with_lime_oct(image_path):
     """
     Generates LIME explanation for an image.
     """
@@ -53,7 +53,7 @@ def explain_with_lime(image_path):
         "lime_image_path": image_path  # This can be updated to save & return the heatmap image
     }
 
-def explain_with_shap(image_path):
+def explain_with_shap_oct(image_path):
     """
     Generates SHAP explanation for an image.
     """
@@ -74,5 +74,26 @@ def explain_with_shap(image_path):
         "shap_explanation": "SHAP explanation generated",
         "shap_image_path": image_path  # Similar to LIME, update to save heatmap if needed
     }
-explain_with_lime(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
-explain_with_shap(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
+#explain_with_lime_oct(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
+#explain_with_shap_oct(r"C:\Users\Dinurakshan\Visio-Glance\backend\api\ml\cnv.jpeg")
+def generate_xai_oct(image_path):
+    """
+    Generates both LIME and SHAP explanations for an OCT image.
+
+    Parameters:
+        image_path (str): Path to the input image.
+
+    Returns:
+        dict: A dictionary containing both LIME and SHAP explanations.
+    """
+    # Generate LIME explanation
+    lime_result = explain_with_lime_oct(image_path)
+
+    # Generate SHAP explanation
+    shap_result = explain_with_shap_oct(image_path)
+
+    # Return combined results
+    return {
+        "lime_explanation": lime_result,
+        "shap_explanation": shap_result
+    }
