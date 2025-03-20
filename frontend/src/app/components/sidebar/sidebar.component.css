@@ -71,7 +71,7 @@ body {
 }
 .sidebar {
     width: 250px; /* Fixed width */
-    background: linear-gradient(90deg, #bbbcbc, #e7e7e7);
+    background: linear-gradient(90deg, #007bff, #0056b3);
     padding: 20px;
     color: white;
     height: 100vh; /* Full viewport height */
