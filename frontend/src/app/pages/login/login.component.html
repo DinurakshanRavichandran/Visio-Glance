@@ -1,0 +1,40 @@
+<div class="login-container">
+  <!-- Video Section -->
+  <div class="video-section">
+      <video autoplay loop muted playsinline>
+          <source src="assets/videos/loginBackground.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+      </video>
+      <div class="video-text-overlay">
+          <h1>AI-Powered Healthcare</h1>
+          <p>Innovating the future of medical diagnostics</p>
+      </div>
+  </div>
+
+  <!-- Form Section -->
+  <div class="form-section">
+      <!-- Background Image -->
+      <img src="assets/images/loginbackground.jpg" class="background-image">
+
+      <!-- Text Overlay -->
+      <div class="text-overlay">
+          <h1>Visio Glance AI</h1>
+          <p>Advanced AI-driven diagnostics at your fingertips.</p>
+      </div>
+
+      <!-- Login Form -->
+      <div class="form-content">
+          <h2>Welcome Back!</h2>
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+              <input type="text" formControlName="username" placeholder="Username">
+              <input type="password" formControlName="password" placeholder="Password">
+              <button type="submit">Login</button>
+          </form>
+          <!-- Sign-up link -->
+          <p class="signup-text">
+              Don't have an account? <a routerLink="/register">Sign up</a>
+          </p>
+          <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+      </div>
+  </div>
+</div>
