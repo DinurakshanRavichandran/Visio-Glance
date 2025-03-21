@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1-e5JNhHe7QsM8lST_GJorklz6IcXSPHe
 """
 
-from flask import Flask, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file
 import numpy as np
 import joblib
 import tensorflow as tf
@@ -19,7 +19,8 @@ from skimage.segmentation import mark_boundaries
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.applications.resnet50 import preprocess_input, ResNet50
 
-app = Flask(__name__)
+# Blueprint for image processing
+image_bp = Blueprint('image', __name__)
 
 # Load model and ResNet50 feature extractor
 model_path = 'Sakuna_Eye_Disease_Detection_Model.h5'
@@ -90,7 +91,7 @@ def show_grad_cam_explanation(image_path):
     cv2.imwrite(grad_cam_path, superimposed_img)
     return grad_cam_path
 
-@app.route('/predict', methods=['POST'])
+@image_bp.route('/predict', methods=['POST'])
 def predict():
     file = request.files['file']
     file_path = 'uploaded_image.png'
@@ -98,7 +99,7 @@ def predict():
     disease = predict_disease(file_path)
     return jsonify({'predicted_disease': disease})
 
-@app.route('/lime', methods=['POST'])
+@image_bp.route('/lime', methods=['POST'])
 def lime():
     file = request.files['file']
     file_path = 'uploaded_image.png'
@@ -106,13 +107,11 @@ def lime():
     lime_path = show_lime_explanation(file_path)
     return send_file(lime_path, mimetype='image/png')
 
-@app.route('/gradcam', methods=['POST'])
+
+@image_bp.route('/gradcam', methods=['POST'])
 def gradcam():
     file = request.files['file']
     file_path = 'uploaded_image.png'
     file.save(file_path)
     grad_cam_path = show_grad_cam_explanation(file_path)
     return send_file(grad_cam_path, mimetype='image/png')
-
-if __name__ == '_main_':
-    app.run(debug=True)
