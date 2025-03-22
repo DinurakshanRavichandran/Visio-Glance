@@ -1,0 +1,23 @@
+  .vision-section {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-around;
+    padding: 50px;
+    background: #f9f9f9;
+  }
+  
+  .vision-content {
+    max-width: 50%;
+  }
+  
+  .vision-content h2 {
+    font-size: 28px;
+    color: #0056b3;
+  }
+  
+  .vision-image img {
+    max-width: 400px;
+    border-radius: 10px;
+  }
+  

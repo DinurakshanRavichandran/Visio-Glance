@@ -1,0 +1,16 @@
+<section class="team-section">
+    <h2>Meet Our Team</h2>
+    <p class="team-intro">
+      Our team consists of experienced professionals in AI, data science, and ophthalmology,
+      working together to revolutionize eye disease diagnosis.
+    </p>
+    <div class="team-container">
+      <app-team-member
+        *ngFor="let member of teamMembers"
+        [name]="member.name"
+        [role]="member.role"
+        [image]="member.image">
+      </app-team-member>
+    </div>
+  </section>
+  
