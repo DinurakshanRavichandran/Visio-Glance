@@ -9,11 +9,13 @@ import { TeamMemberComponent } from '../team-member/team-member.component';
   templateUrl: './team.component.html',
   styleUrls: ['./team.component.css']
 })
+
+// TODO: implement logic for get images for users
 export class TeamComponent {
   teamMembers = [  // Ensure the property name matches the one used in HTML
-    { name: 'Dr. Sarah Johnson', role: 'Ophthalmologist', image: 'assets/team/team1.png' },
-    { name: 'Mark Lee', role: 'AI Researcher', image: 'assets/team/team2.png' },
-    { name: 'Emily Carter', role: 'Data Scientist', image: 'assets/team/team3.png' },
-    { name: 'Dr. John Smith', role: 'Medical Advisor', image: 'assets/team/team4.png' }
+    { name: 'Dr. Sarah Johnson', role: 'Ophthalmologist', image: 'assets/team/team.png' },
+    { name: 'Mark Lee', role: 'AI Researcher', image: 'assets/team/team.png' },
+    { name: 'Emily Carter', role: 'Data Scientist', image: 'assets/team/team.png' },
+    { name: 'Dr. John Smith', role: 'Medical Advisor', image: 'assets/team/team.png' }
   ];
 }
