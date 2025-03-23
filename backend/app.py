@@ -1,6 +1,5 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
-from api.auth import auth_bp
 from routes import bp  # Import the routes Blueprint
 from api.fundus_image import image_bp
 
@@ -12,12 +11,22 @@ CORS(app, supports_credentials=True)  # Enable CORS for all routes
 def home():
     return jsonify({"message": "Welcome to Visio-Glance Backend!"})
 
+ 
 CORS(auth_bp, supports_credentials=True)
 CORS(bp, supports_credentials=True)
 CORS(image_bp, supports_credentials=True)
 
+# Route to serve static files
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory('static', filename)
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+
 # Register Blueprints
-app.register_blueprint(auth_bp, url_prefix='/api/auth')  # Authentication routes
 app.register_blueprint(bp)  # Image processing routes
 app.register_blueprint(image_bp, url_prefix='/api/image')  # Image processing routes
 
