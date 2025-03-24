@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './fundus-analyser.component.html',
   styleUrls: ['./fundus-analyser.component.css']
 })
+
 export class FundusAnalyserComponent {
   fileName: string | null = null;
   imagePreview: string | null = null;
@@ -40,8 +41,18 @@ export class FundusAnalyserComponent {
     // Simulate an AI analysis process
     setTimeout(() => {
       this.isLoading = false;
-      this.diagnosis = 'Sample Diagnosis Result'; // Placeholder diagnosis
+      this.diagnosis = this.generateMockDiagnosis();
       this.processedImage = this.imagePreview; // Placeholder for processed image
     }, 2000);
+  }
+
+  private generateMockDiagnosis(): string {
+    const conditions = [
+      'No signs of diabetic retinopathy detected.',
+      'Mild signs of diabetic retinopathy detected.',
+      'Moderate signs of diabetic retinopathy detected.',
+      'Severe signs of diabetic retinopathy detected.'
+    ];
+    return conditions[Math.floor(Math.random() * conditions.length)];
   }
 }
