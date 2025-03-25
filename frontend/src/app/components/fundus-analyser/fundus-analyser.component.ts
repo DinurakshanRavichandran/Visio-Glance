@@ -1,58 +1,64 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http'; // ✅ Import HttpClientModule
+import { ImageAnalysisService } from '../../services/image-analysis.service';
 
 @Component({
   selector: 'app-fundus-analyser',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule], // ✅ Add HttpClientModule
   templateUrl: './fundus-analyser.component.html',
-  styleUrls: ['./fundus-analyser.component.css']
+  styleUrls: ['./fundus-analyser.component.css'],
+  providers: [ImageAnalysisService] // ✅ Provide service
 })
-
 export class FundusAnalyserComponent {
   fileName: string | null = null;
   imagePreview: string | null = null;
   isLoading = false;
   diagnosis: string | null = null;
   processedImage: string | null = null;
+  selectedFile: File | null = null;
+
+  constructor(private imageService: ImageAnalysisService) {}
 
   onFileSelected(event: Event): void {
+    console.log("hk")
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      this.fileName = file.name;
+      this.selectedFile = input.files[0];
+      this.fileName = this.selectedFile.name;
 
       const reader = new FileReader();
       reader.onload = () => {
         this.imagePreview = reader.result as string;
       };
-      reader.readAsDataURL(file);
-
-      this.analyzeImage(file);
+      reader.readAsDataURL(this.selectedFile);
     }
+    this.analyzeImage()
   }
 
-  analyzeImage(file: File): void {
+  analyzeImage(): void {
+    console.log("hk")
+    if (!this.selectedFile) {
+      alert('Please select an image first.');
+      return;
+    }
+
     this.isLoading = true;
     this.diagnosis = null;
     this.processedImage = null;
 
-    // Simulate an AI analysis process
-    setTimeout(() => {
-      this.isLoading = false;
-      this.diagnosis = this.generateMockDiagnosis();
-      this.processedImage = this.imagePreview; // Placeholder for processed image
-    }, 2000);
-  }
-
-  private generateMockDiagnosis(): string {
-    const conditions = [
-      'No signs of diabetic retinopathy detected.',
-      'Mild signs of diabetic retinopathy detected.',
-      'Moderate signs of diabetic retinopathy detected.',
-      'Severe signs of diabetic retinopathy detected.'
-    ];
-    return conditions[Math.floor(Math.random() * conditions.length)];
+    this.imageService.analyzeImage(this.selectedFile).subscribe({
+      next: (response) => {
+        this.diagnosis = response.predicted_disease;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        this.diagnosis = 'Error analyzing image. Try again.';
+        this.isLoading = false;
+      }
+    });
   }
 }

@@ -5,12 +5,16 @@ from routes import bp  # Import the routes Blueprint
 from api.fundus_image import image_bp
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, supports_credentials=True)  # Enable CORS for all routes
 
 # Define a route for the root URL
 @app.route("/")
 def home():
     return jsonify({"message": "Welcome to Visio-Glance Backend!"})
+
+CORS(auth_bp, supports_credentials=True)
+CORS(bp, supports_credentials=True)
+CORS(image_bp, supports_credentials=True)
 
 # Register Blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')  # Authentication routes
