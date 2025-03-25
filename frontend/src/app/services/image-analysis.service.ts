@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ImageAnalysisService {
-  private backendUrl = 'https://studious-space-parakeet-7vrw4jqw9gxqhprqg-5000.app.github.dev/'; // Replace with your actual backend URL
+  private backendUrl = environment.backendUrl;
 
   constructor(private http: HttpClient) {}
 
