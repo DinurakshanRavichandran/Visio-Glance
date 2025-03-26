@@ -2,6 +2,8 @@ from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from routes import bp  # Existing blueprint
 from api.fundus_image import image_bp  # Image blueprint
+from api.ml.chat import chat_bp  # New chat blueprint
+
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)  # Global CORS
@@ -14,6 +16,7 @@ def home():
 # Apply CORS only to defined blueprints
 CORS(bp, supports_credentials=True)
 CORS(image_bp, supports_credentials=True)
+CORS(chat_bp, supports_credentials=True)
 
 # Static files route
 @app.route('/static/<path:filename>')
@@ -27,6 +30,7 @@ def favicon():
 # Register blueprints
 app.register_blueprint(bp)
 app.register_blueprint(image_bp, url_prefix='/api/image')
+app.register_blueprint(chat_bp, url_prefix='/api/ml/chat')  # Register chat blueprint
 
 if __name__ == '__main__':
     app.run(debug=True)
