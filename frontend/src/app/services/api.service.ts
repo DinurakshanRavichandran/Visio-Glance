@@ -14,6 +14,11 @@ export interface OctClassificationResponse {
   };
 }
 
+interface ChatResponse {
+  response: string;
+}
+// Note: The ChatResponse interface is a placeholder. Adjust it according to your actual API response structure.
+
 @Injectable({
   providedIn: 'root'
 })
@@ -34,6 +39,13 @@ export class ApiService {
     ).pipe(
       catchError(this.oct_handleError)
     );
+  }
+
+  sendChatMessage(message: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(
+      `${this.apiUrl}/api/ml/chat`,
+      { message: message }
+    ).pipe(catchError(this.handleError));
   }
 
   oct_getXaiImage(imageUrl: string): Observable<Blob> {
