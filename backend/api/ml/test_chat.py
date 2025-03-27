@@ -3,7 +3,7 @@ import json
 
 def test_chat_endpoint():
     # Update with your actual backend URL
-    BASE_URL = "http://localhost:5000/api/ml/chat/chat"
+    BASE_URL = "http://localhost:5000/api/ml/chat"
     
     # Test payloads
     test_cases = [

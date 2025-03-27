@@ -1,1 +1,26 @@
-<p>chatbot works!</p>
+<div class="chat-container">
+    <div class="chat-section">
+      <div class="chat-header">
+        <h2>AI Medical Assistant</h2>
+      </div>
+      
+      <div class="chat-window" #chatWindow>
+        <div *ngFor="let message of messages" 
+             class="message" 
+             [ngClass]="{'user-message': message.type === 'user', 'bot-message': message.type === 'bot'}">
+          <p>{{ message.content }}</p>
+        </div>
+        <div *ngIf="isLoading" class="message bot-message">
+          <p>Thinking...</p>
+        </div>
+      </div>
+  
+      <div class="chat-input">
+        <input type="text" 
+               [(ngModel)]="userInput" 
+               placeholder="Type a message..."
+               (keyup.enter)="sendMessage()">
+        <button (click)="sendMessage()" [disabled]="isLoading">Send</button>
+      </div>
+    </div>
+  </div>

@@ -15,10 +15,10 @@ def ask_perplexity(prompt: str) -> str:
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "sonar-small-chat",
+        "model": "sonar",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.7,
-        "max_tokens": 300
+        "max_tokens": 100
     }
     
     try:
