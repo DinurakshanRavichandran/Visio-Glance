@@ -21,8 +21,16 @@ CORS(chat_bp, supports_credentials=True)
 # Static files route
 @app.route('/static/<path:filename>')
 def static_files(filename):
-    return send_from_directory('static', filename)
-
+    try:
+        response = send_from_directory('static', filename)
+        # Add CORS headers to static files if needed
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    except FileNotFoundError:
+        return "File not found", 404
+    except Exception as e:
+        return str(e), 400
+    
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory('static', 'favicon.ico', mimetype='image/vnd.microsoft.icon')
