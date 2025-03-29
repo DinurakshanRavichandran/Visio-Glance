@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -21,6 +21,29 @@ export class ImageAnalysisService {
     );
   }
 
+  getLimeExplanation(formData: FormData): Observable<Blob> {
+    return this.http.post<{lime_url: string}>(
+      this.backendUrl + 'api/image/lime', 
+      formData
+    ).pipe(
+      switchMap(response => {
+        // Fetch the actual image from the returned URL
+        return this.http.get(this.backendUrl + response.lime_url, { responseType: 'blob' });
+      })
+    );
+  }
+  
+  getGradcamExplanation(formData: FormData): Observable<Blob> {
+    return this.http.post<{gradcam_url: string}>(
+      this.backendUrl + 'api/image/gradcam', 
+      formData
+    ).pipe(
+      switchMap(response => {
+        // Fetch the actual image from the returned URL
+        return this.http.get(this.backendUrl + response.gradcam_url, { responseType: 'blob' });
+      })
+    );
+  }
   // testing
   getBackendStatus(): void {
     this.http.get(this.backendUrl, { 

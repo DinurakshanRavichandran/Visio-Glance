@@ -9,8 +9,8 @@ bp = Blueprint("routes", __name__)
 # Configuration
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "uploads")
-#STATIC_FOLDER = os.path.join(os.path.dirname(__file__), "static")
-STATIC_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+STATIC_FOLDER = os.path.join(os.path.dirname(__file__), "static")
+# STATIC_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
 
 
 # Ensure directories exist

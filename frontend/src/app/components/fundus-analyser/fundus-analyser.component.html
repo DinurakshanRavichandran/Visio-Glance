@@ -34,7 +34,15 @@
   <div *ngIf="diagnosis" id="result-container">
     <h3>AI Diagnosis</h3>
     <p id="diagnosis-text">{{ diagnosis }}</p>
-    <!-- <h3>Processed Image</h3>
-    <img [src]="processedImage" alt="Processed Image" id="processed-image" /> -->
+    <div class="explanations-container">
+      <div class="explanation">
+        <h4>LIME Explanation</h4>
+        <img [src]="limeExplanation" alt="LIME Explanation" *ngIf="limeExplanation" />
+      </div>
+      <div class="explanation">
+        <h4>Grad-CAM Explanation</h4>
+        <img [src]="gradcamExplanation" alt="Grad-CAM Explanation" *ngIf="gradcamExplanation" />
+      </div>
+    </div>
   </div>
 </div>

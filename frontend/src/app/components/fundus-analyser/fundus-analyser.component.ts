@@ -19,6 +19,8 @@ export class FundusAnalyserComponent {
   diagnosis: string | null = null;
   processedImage: string | null = null;
   selectedFile: File | null = null;
+  limeExplanation: string | null = null;
+  gradcamExplanation: string | null = null;
 
   constructor(private imageService: ImageAnalysisService) {}
 
@@ -48,17 +50,44 @@ export class FundusAnalyserComponent {
     this.isLoading = true;
     this.diagnosis = null;
     this.processedImage = null;
+    this.limeExplanation = null;
+    this.gradcamExplanation = null
 
     this.imageService.analyzeImage(this.selectedFile).subscribe({
       next: (response) => {
         this.diagnosis = response.predicted_disease;
-        this.isLoading = false;
+        
+        // Then get the explanation images
+        this.getExplanationImages(this.selectedFile!);
       },
       error: (err) => {
         console.error(err);
         this.diagnosis = 'Error analyzing image. Try again.';
         this.isLoading = false;
       }
+    });
+  }
+
+  private getExplanationImages(file: File): void {
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    // Get LIME explanation
+    this.imageService.getLimeExplanation(formData).subscribe({
+      next: (limeResponse) => {
+        this.limeExplanation = URL.createObjectURL(limeResponse);
+      },
+      error: (err) => console.error('LIME error:', err)
+    });
+  
+    // Get Grad-CAM explanation
+    this.imageService.getGradcamExplanation(formData).subscribe({
+      next: (gradcamResponse) => {
+        this.gradcamExplanation = URL.createObjectURL(gradcamResponse);
+        this.isLoading = false;
+        console.log(gradcamResponse)
+      },
+      error: (err) => console.error('Grad-CAM error:', err)
     });
   }
 }
