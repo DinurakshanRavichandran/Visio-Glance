@@ -49,7 +49,7 @@ def show_lime_explanation(image_path):
         # Load image
         img = load_img(image_path, target_size=(224, 224))
         img_array = img_to_array(img)
-        
+
         # Corrected prediction function
         def predict_fn(images):
             processed = preprocess_input(images.copy())
@@ -65,33 +65,51 @@ def show_lime_explanation(image_path):
 
         explainer = lime_image.LimeImageExplainer()
         explanation = explainer.explain_instance(
-            img_array.astype('double'),
+            img_array.astype("double"),
             predict_fn,
             top_labels=1,
             hide_color=0,
-            num_samples=100
+            num_samples=1000  # Updated to match the first approach
         )
 
         temp, mask = explanation.get_image_and_mask(
             explanation.top_labels[0],
             positive_only=True,
-            num_features=3,
+            num_features=50,  # Updated to match the first approach
             hide_rest=True
         )
-        
+
+        # Generate LIME heatmap
+        ind = explanation.top_labels[0]
+        dict_heatmap = dict(explanation.local_exp[ind])
+        heatmap = np.vectorize(dict_heatmap.get)(explanation.segments)
+
         output_path = XAI_DIR / f"lime_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-        plt.figure(figsize=(6,6))
+        plt.figure(figsize=(12,6))
+        
+        # Plot LIME explanation
+        plt.subplot(1, 2, 1)
         plt.imshow(mark_boundaries(temp, mask))
         plt.axis('off')
+        plt.title("LIME Explanation")
+        
+        # Plot heatmap
+        plt.subplot(1, 2, 2)
+        im = plt.imshow(heatmap, cmap="RdBu", vmin=-heatmap.max(), vmax=heatmap.max())
+        plt.axis('off')
+        plt.title("LIME Heatmap")
+        plt.colorbar(im, fraction=0.046, pad=0.04)
+        
         plt.savefig(output_path, bbox_inches='tight', dpi=100)
         plt.close()
-        
+
         return f"xai/{output_path.name}"
 
     except Exception as e:
         print(f"LIME Error: {str(e)}")
         traceback.print_exc()
         return None
+
 
 def show_grad_cam_explanation(image_path):
     try:

@@ -6,6 +6,10 @@ from tensorflow.keras.models import load_model
 import shap
 import lime
 from lime import lime_image
+import matplotlib
+matplotlib.use('Agg')  # Force non-GUI backend
+import tkinter as tk  # Initialize Tkinter
+
 import matplotlib.pyplot as plt
 from PIL import Image
 
@@ -47,19 +51,27 @@ def explain_with_lime_oct(image_path):
     """
     Generates LIME explanation for an image and saves the heatmap.
     """
+    # Load image in grayscale and convert to 3-channel RGB for visualization
     original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     if original_image is None:
         raise ValueError(f"Error: Unable to read image at {image_path}")
-
     original_image_rgb = cv2.cvtColor(original_image, cv2.COLOR_GRAY2RGB)
-    processed_image = cv2.resize(original_image_rgb, (224, 224))
+    
+    # Resize image for display purposes
+    original_image_resized = cv2.resize(original_image_rgb, (224, 224))
+    
+    # Preprocess image for the model (assumes you have defined preprocess_image elsewhere)
+    processed_image = preprocess_image(image_path)[0]
 
     explainer = lime_image.LimeImageExplainer()
 
     def model_predict_wrapper(images):
-        images = np.array([tf.keras.applications.efficientnet.preprocess_input(img) for img in images])
-        return model.predict(images)
+        processed_images = np.array([
+            tf.keras.applications.efficientnet.preprocess_input(img) for img in images
+        ])
+        return model.predict(processed_images)
 
+    # Generate LIME explanation using the processed image
     explanation = explainer.explain_instance(
         processed_image,
         model_predict_wrapper,
@@ -68,8 +80,11 @@ def explain_with_lime_oct(image_path):
         num_samples=1000
     )
 
-    # Get explanation data
-    label = np.argmax(model.predict(np.expand_dims(processed_image, axis=0)))
+    # Get predicted label from the model using the processed image
+    predictions = model.predict(np.expand_dims(processed_image, axis=0))
+    label = np.argmax(predictions, axis=-1)[0]
+
+    # Get explanation mask for the predicted label
     temp, mask = explanation.get_image_and_mask(
         label,
         positive_only=True,
@@ -77,12 +92,17 @@ def explain_with_lime_oct(image_path):
         hide_rest=False,
     )
 
-    # Create and save heatmap visualization with proper colormap
+    # Create a visualization by overlaying the heatmap on the original image
     base_name = os.path.splitext(os.path.basename(image_path))[0]  # Remove extension
     lime_filename = f"lime_{base_name}.png"
     lime_path = os.path.join(STATIC_DIR, lime_filename)
     
-    plt.imshow(mask, cmap='RdBu', vmin=-mask.max(), vmax=mask.max())
+    plt.figure(figsize=(8, 8))
+    # Show the original image (displayed in grayscale)
+    plt.imshow(original_image_resized, cmap="gray")
+    # Overlay the explanation mask using a jet colormap with transparency
+    plt.imshow(mask, cmap='jet', alpha=0.5)
+    plt.title(f"LIME Explanation for Label {label}")
     plt.axis('off')
     plt.savefig(lime_path, bbox_inches='tight', pad_inches=0)
     plt.close()
@@ -91,6 +111,7 @@ def explain_with_lime_oct(image_path):
         "lime_image": f"static/xai/{lime_filename}",
         "explanation": "LIME explanation generated"
     }
+
 
 def explain_with_shap_oct(image_path):
     """Generates and saves SHAP explanation."""

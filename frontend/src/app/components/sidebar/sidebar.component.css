@@ -74,7 +74,7 @@ body {
     background: linear-gradient(90deg, #007bff, #0056b3);
     padding: 20px;
     color: white;
-    height: 200vh; /* Full viewport height */
+    height: 250vh; /* Full viewport height */
     flex-shrink: 0; /* Prevent shrinking */
   }
   
