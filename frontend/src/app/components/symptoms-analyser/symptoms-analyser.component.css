@@ -1,0 +1,315 @@
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    display: flex;
+    height: 100vh;
+    background: #f4f4f4;
+}
+
+
+/* Main Content */
+.container {
+    display: flex;
+    flex-direction: column; /* Stack content vertically */
+    flex: 1;
+    padding: 40px;
+    align-items: center; /* Align to center horizontally */
+    justify-content: flex-start; /* Align content to the top */
+    background: #fff;
+    overflow-y: auto; /* Enable scrolling if content is too long */
+    height: 100vh; /* Ensure it takes full height */
+}
+
+
+.main-content {
+    max-width: 800px;
+    text-align: center;
+    margin-top: 20px; /* Reduce unnecessary spacing */
+    padding-bottom: 40px; /* Add some space at the bottom */
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.main-content h1 {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 20px; /* Adds space below the heading */
+}
+
+.main-content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 30px; /* Adds space below the paragraph */
+}
+
+/* Form Styling */
+
+/* Two-column grid layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+form {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: 0.3s;
+    margin-top: 20px; /* Adds space above the form */
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Visual Symptoms and others that need full width */
+.form-group.full-width {
+    grid-column: 1 / -1; /* Spans both columns */
+}
+
+/* Ensure input, select stay 100% width */
+input, select {
+    width: 100%;
+}
+
+/* Optional: improve responsiveness */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #007bff;
+    border: none;
+    color: white;
+    font-size: 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Multi-select Symptoms */
+/* Modern Multi-select Wrapper */
+.symptoms-multi-select {
+    position: relative;
+    width: 100%;
+    cursor: pointer;
+}
+
+.symptoms-multi-select input {
+    background: #fff;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: border 0.3s ease;
+}
+
+.symptoms-multi-select input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Dropdown Container */
+.symptoms-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d0e3ff;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+/* Checkbox Grid Layout */
+.symptoms-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    padding: 15px;
+}
+
+/* Checkbox Item Styling */
+.symptoms-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f7faff;
+    padding: 8px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: background 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.symptoms-options input[type="checkbox"] {
+    accent-color: #007bff;
+    transform: scale(1.1);
+}
+
+.symptoms-options label:hover {
+    background: #e9f3ff;
+    border-color: #bcdfff;
+}
+
+
+html, body {
+    height: 100%;
+    overflow-y: auto;
+}
+
+
+/* Animation */
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+.form-section {
+    grid-column: 1 / -1;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 30px 0 10px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+    color: #007bff;
+}
+
+.form-group {
+    background: #f1f7ff;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #d0e3ff;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+label {
+    margin-bottom: 6px;
+    color: #333;
+    font-weight: 600;
+}
+
+input::placeholder {
+    color: #888;
+    font-style: italic;
+}
+
+button {
+    margin-top: 30px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+
+.paragraph-box {
+    background: #eef6ff; /* Light blue background */
+    border: 1px solid #c6e2ff;
+    padding: 25px;
+    border-radius: 8px;
+    margin-bottom: 40px;
+    text-align: left;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.05);
+}
+
+.intro {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #444;
+    margin-bottom: 16px;
+    text-align: justify;
+}
+
+.intro strong {
+    color: #0056b3;
+    font-weight: 600;
+}
+
+.disease-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 16px 0 24px;
+}
+
+.disease-item {
+    background-color: #dceeff;
+    border: 1px solid #b5daff;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 15px;
+    color: #004a99;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: background 0.3s ease;
+}
+
+.disease-item:hover {
+    background-color: #cde7ff;
+}
+
+.disease-item span {
+    display: block;
+    font-weight: 400;
+    font-size: 13px;
+    color: #336699;
+    margin-top: 4px;
+}
+
+.required {
+    color: red;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
