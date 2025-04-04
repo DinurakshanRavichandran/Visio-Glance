@@ -5,6 +5,8 @@ import shap
 import lime.lime_tabular
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import os
+from datetime import datetime
 
 # 🔹 Load models
 with open('diagnosis_model.pkl', 'rb') as file:
@@ -92,7 +94,7 @@ def predict_with_explanations(form_data_dict):
 
         # If healthy, no need to explain disease
         if diagnosis_pred == 0:
-            return result
+            return result, input_df
 
         # Step 4: Predict Disease
         disease_pred = disease_model.predict(input_df)[0]
@@ -126,7 +128,7 @@ def predict_with_explanations(form_data_dict):
         lime_dis_expl = lime_dis_exp.as_list()
         result["explanations"]["disease"]["lime"] = lime_dis_expl
 
-        return result
+        return result, input_df
 
     except Exception as e:
         return {"error": str(e)}
@@ -134,12 +136,20 @@ def predict_with_explanations(form_data_dict):
 
 
 
-
-def explain_prediction_visually(result, input_df, title=""):
+def explain_prediction_visually(result, input_df, title="", save_dir=None):
     """
     Converts SHAP and LIME results into easy-to-read explanations for patients.
     Optionally visualize the SHAP values with a bar chart.
     """
+
+    # ✅ Fix: Set absolute path to backend/static/xai
+    if save_dir is None:
+        script_dir = os.path.dirname(os.path.abspath(__file__))  # Current script path (backend/api/ml)
+        save_dir = os.path.abspath(os.path.join(script_dir, '..', '..', 'static', 'xai'))  # backend/static/xai
+
+    os.makedirs(save_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     if "error" in result:
         print("⚠️ Error during prediction:", result["error"])
         return
@@ -148,67 +158,88 @@ def explain_prediction_visually(result, input_df, title=""):
     print(f"📝 Message: {result['message']}")
 
     if result["diagnosis"] == "Healthy":
-        print("\n🎉 The model did not detect any signs of eye disease.")
-        print("✅ You appear to be healthy based on the provided features.")
+        print("\n The model did not detect any signs of eye disease.")
+        print("✅You appear to be healthy based on the provided features.")
         
-        # Create a full green healthy chart with smiley + messages
+        
         fig, ax = plt.subplots(figsize=(4, 4))
         ax.set_facecolor('#2ecc71')  # Bright green background
-
-        # Remove axis
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
 
-        # Add happy emoji and text
         ax.text(0.5, 0.7, '😊', fontsize=60, ha='center', va='center')
         ax.text(0.5, 0.45, 'You are healthy!', fontsize=16, ha='center', va='center', color='white')
         ax.text(0.5, 0.30, "No signs of eye disease detected!", fontsize=12, ha='center', va='center', color='white')
 
-        # Title
         plt.title("No Eye Disease Detected", fontsize=14, color='white')
         plt.tight_layout()
-        plt.show()
 
+        save_path = os.path.join(save_dir, f"healthy_summary_{timestamp}.png")
+        plt.savefig(save_path, bbox_inches='tight')
+        print(f"📸 Saved to: {save_path}")
+        plt.show()
+        plt.close()
         return
 
-    # Only elaborate if a disease is detected
-    if result["diagnosis"] == "Disease Detected":
-        disease = result.get("disease", "Unknown")
-        print(f"\n🧬 Disease Identified: {disease}")
+    # --- If Disease Detected ---
+    disease = result.get("disease", "Unknown")
+    print(f"\n🧬 Disease Identified: {disease}")
 
-        print("\n🔍 SHAP Explanation (Top Contributing Factors):")
-        for feature, value in result["explanations"]["disease"]["shap"]:
-            impact = "increased" if value > 0 else "reduced"
-            print(f"• {feature} {impact} the likelihood of {disease} (impact: {round(abs(value), 4)})")
+    print("\n SHAP Explanation (Top Contributing Factors):")
+    for feature, value in result["explanations"]["disease"]["shap"]:
+        impact = "increased" if value > 0 else "reduced"
+        print(f"• {feature} {impact} the likelihood of {disease} (impact: {round(abs(value), 4)})")
 
-        print("\n💡 LIME Explanation (Patient-friendly terms):")
-        for feature, weight in result["explanations"]["disease"]["lime"]:
-            direction = "supports" if weight > 0 else "reduces"
-            print(f"• {feature} {direction} the prediction for {disease} (weight: {round(weight, 4)})")
+    print("\n💡 LIME Explanation (Patient-friendly terms):")
+    for feature, weight in result["explanations"]["disease"]["lime"]:
+        direction = "supports" if weight > 0 else "reduces"
+        print(f"• {feature} {direction} the prediction for {disease} (weight: {round(weight, 4)})")
 
-        # OPTIONAL: Visual bar chart for SHAP (run only in interactive environment)
-        shap_values = result["explanations"]["disease"]["shap"]
-        if shap_values:
-            features, values = zip(*shap_values)
-            colors = ['green' if v > 0 else 'red' for v in values]
+    # --- SHAP and LIME Combined Visualization ---
+    shap_values = result["explanations"]["disease"]["shap"]
+    lime_values = result["explanations"]["disease"]["lime"]
 
-            plt.figure(figsize=(10, 5))
-            plt.barh(features, values, color=colors)
-            plt.xlabel("SHAP Value (Impact on Prediction)")
-            plt.title(f"Top 10 Influential Features for {disease}")
-            plt.gca().invert_yaxis()
-            red_patch = mpatches.Patch(color='red', label='Negative Impact')
-            green_patch = mpatches.Patch(color='green', label='Positive Impact')
-            plt.legend(handles=[green_patch, red_patch])
-            plt.tight_layout()
-            plt.show()
+    if shap_values and lime_values:
+        shap_features, shap_importances = zip(*shap_values)
+        shap_colors = ['#ff7f0e' if val > 0 else '#1f77b4' for val in shap_importances]
 
+        lime_features, lime_weights = zip(*lime_values)
+        lime_colors = ['#ff7f0e' if val > 0 else '#1f77b4' for val in lime_weights]
 
+        fig, axes = plt.subplots(nrows=2, figsize=(10, 9))
 
+        # Title for entire figure
+        plt.suptitle(f"Disease Identified – {disease}", fontsize=16, fontweight='bold')
+
+        # --- SHAP subplot ---
+        axes[0].barh(shap_features, shap_importances, color=shap_colors)
+        axes[0].set_title(f" SHAP - Top Features Influencing {disease}", fontsize=12)
+        axes[0].invert_yaxis()
+        axes[0].set_xlabel("SHAP Value (Impact)")
+
+        # --- LIME subplot ---
+        axes[1].barh(lime_features, lime_weights, color=lime_colors)
+        axes[1].set_title(f" LIME - Local Explanation for {disease}", fontsize=12)
+        axes[1].invert_yaxis()
+        axes[1].set_xlabel("LIME Weight (Impact)")
+
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        legend_patches = [
+            mpatches.Patch(color='#ff7f0e', label='Positive Contribution'),
+            mpatches.Patch(color='#1f77b4', label='Negative Contribution')
+        ]
+
+        plt.legend(handles=legend_patches, loc='lower right')
+
+        # ✅ Save figure
+        save_path = os.path.join(save_dir, f"{disease}_shap_lime_combined_{timestamp}.png")
+        plt.savefig(save_path, bbox_inches='tight')
+        print(f"📸 SHAP + LIME explanation saved to: {save_path}")
+        plt.show()
+        plt.close()
+    
 
 # 🔹 Run standalone tests
 if __name__ == "__main__":
@@ -305,36 +336,33 @@ if __name__ == "__main__":
 
 
 print("\n🧪 Glaucoma Test:")
-result = predict_with_explanations(glaucoma_input)
-explain_prediction_visually(result, glaucoma_input, title="Glaucoma Test")
+result, input_df = predict_with_explanations(glaucoma_input)
+explain_prediction_visually(result, input_df, title="Glaucoma Test")
 
 print("\n🧪 Cataract Test:")
-result = predict_with_explanations(cataract_input)
-explain_prediction_visually(result, cataract_input, title="Cataract Test")
+result, input_df = predict_with_explanations(cataract_input)
+explain_prediction_visually(result,input_df, title="Cataract Test")
 
 
 print("\n🧪 Diabetic Retinopathy Test:")
-result = predict_with_explanations(diabetic_retinopathy_input)
-explain_prediction_visually(result, diabetic_retinopathy_input, title="Diabetic Retinopathy Test")
+result, input_df = predict_with_explanations(diabetic_retinopathy_input)
+explain_prediction_visually(result, input_df, title="Diabetic Retinopathy Test")
 
 
 print("\n🧪 CNV Test:")
-result = predict_with_explanations(cnv_input)
-explain_prediction_visually(result, cnv_input, title="CNV Test")
+result, input_df = predict_with_explanations(cnv_input)
+explain_prediction_visually(result, input_df, title="CNV Test")
 
 
 print("\n🧪 DME Test:")
-result = predict_with_explanations(dme_input)
-explain_prediction_visually(result, dme_input, title="DME Test")
+result, input_df = predict_with_explanations(dme_input)
+explain_prediction_visually(result, input_df, title="DME Test")
 
 
 print("\n🧪 Drusen Test:")
-result = predict_with_explanations(drusen_input)
-explain_prediction_visually(result, drusen_input, title="Drusen Test")
+result, input_df= predict_with_explanations(drusen_input)
+explain_prediction_visually(result, input_df, title="Drusen Test")
 
 print("\n🧪 Healthy Test:")
-result = predict_with_explanations(healthy_input)
-explain_prediction_visually(result, healthy_input)
-
-
-
+result, input_df = predict_with_explanations(healthy_input)
+explain_prediction_visually(result, input_df, title="Healthy")
