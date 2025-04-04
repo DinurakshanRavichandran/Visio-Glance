@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-register',
@@ -13,8 +14,9 @@ import { Router, RouterModule } from '@angular/router';
 export class RegisterComponent {
   registerForm: FormGroup;
   submitted = false;
+  errorMessage: string = '';
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(private fb: FormBuilder, private router: Router, private apiService: ApiService) {
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
@@ -38,18 +40,26 @@ export class RegisterComponent {
 
   onRegister() {
     this.submitted = true;
-
+    this.errorMessage = '';
+  
     if (this.registerForm.invalid) {
-      return; // Stop execution if form is invalid
+      return;
     }
-
-    console.log('Registration Successful:', this.registerForm.value);
-    alert('Registration Successful!');
-
-    // Simulating a small delay before navigating (UX improvement)
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-    }, 1000);
+  
+    const { username, email, password } = this.registerForm.value;
+  
+    this.apiService.register(username, email, password)
+      .subscribe({
+        next: (response) => {
+          console.log('Registration successful:', response);
+          alert('Registration Successful!');
+          this.router.navigate(['/login']);
+        },
+        error: (err) => {
+          this.errorMessage = err;
+          alert(`Registration failed: ${err}`);
+        }
+      });
   }
 
   // Helper function to get form controls

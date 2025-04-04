@@ -62,4 +62,33 @@ export class ApiService {
     console.error('API Error:', error.message);
     return throwError('Something went wrong. Please try again.');
   }
+
+  // Inside your existing ApiService class
+// Add these authentication methods:
+
+login(email: string, password: string): Observable<any> {
+  return this.http.post<any>(
+    `${this.apiUrl}/auth/login`,
+    { email, password }
+  ).pipe(
+    catchError(this.handleAuthError)
+  );
+}
+
+register(username: string, email: string, password: string): Observable<any> {
+  return this.http.post<any>(
+    `${this.apiUrl}/auth/register`,
+    { username, email, password }
+  ).pipe(
+    catchError(this.handleAuthError)
+  );
+}
+
+private handleAuthError(error: HttpErrorResponse) {
+  let errorMessage = 'Authentication failed. Please try again.';
+  if (error.error?.error) {
+    errorMessage = error.error.error; // Use backend error message
+  }
+  return throwError(errorMessage);
+}
 }
