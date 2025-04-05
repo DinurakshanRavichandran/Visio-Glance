@@ -42,6 +42,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: white;
 }
 
 .hero-overlay {
@@ -64,10 +65,12 @@ p {
 .hero-content h1 {
     font-size: 3rem;
     margin-bottom: 20px;
+    color: white;
 }
 
 .hero-content p {
     font-size: 1.5rem;
+    color: white;
 }
 
 /* Features Section */

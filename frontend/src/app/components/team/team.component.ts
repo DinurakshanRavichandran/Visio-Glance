@@ -13,9 +13,9 @@ import { TeamMemberComponent } from '../team-member/team-member.component';
 // TODO: implement logic for get images for users
 export class TeamComponent {
   teamMembers = [  // Ensure the property name matches the one used in HTML
-    { name: 'Dr. Sarah Johnson', role: 'Ophthalmologist', image: 'assets/team/team.png' },
-    { name: 'Mark Lee', role: 'AI Researcher', image: 'assets/team/team.png' },
-    { name: 'Emily Carter', role: 'Data Scientist', image: 'assets/team/team.png' },
-    { name: 'Dr. John Smith', role: 'Medical Advisor', image: 'assets/team/team.png' }
+    { name: 'Sakuna Sankalpa', role: 'Data Scientist', image: '../../../assets/team/sakuna.jpg' },
+    { name: 'Dinurakshan Ravichandran', role: 'AI Researcher', image: '../../../assets/team/dinurakshan.jpg' },
+    { name: 'Surakkitha Galappathy', role: 'Data Scientist', image: '../../../assets/team/Surakkitha.jpg' },
+    { name: 'Yehan Manodya', role: 'Data Scientist', image: '../../../assets/team/yehan.jpg' }
   ];
 }
