@@ -5,6 +5,9 @@ from api.fundus_image import image_bp  # Image blueprint
 from api.ml.chatbot import chat_bp  # New chat blueprint
 from api.auth import auth_bp # Authentication blueprint
 
+from api.ml.symptoms import symptoms_bp
+
+
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)  # Global CORS
@@ -41,6 +44,8 @@ app.register_blueprint(bp)
 app.register_blueprint(image_bp, url_prefix='/api/image')
 app.register_blueprint(chat_bp, url_prefix='/api/ml')  # Register chat blueprint
 app.register_blueprint(auth_bp, url_prefix='/auth')  # Register auth blueprint
+app.register_blueprint(symptoms_bp, url_prefix="/api/symptoms")
+
 
 if __name__ == '__main__':
     app.run(debug=True)

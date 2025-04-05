@@ -3,6 +3,25 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
+// Inside ApiService (top level)
+export interface SymptomsPredictionResponse {
+  diagnosis: string;
+  disease?: string;
+  message: string;
+  xai_image?: string;
+  explanations: {
+    diagnosis: {
+      shap: [string, number][];
+      lime: [string, number][];
+    };
+    disease?: {
+      shap: [string, number][];
+      lime: [string, number][];
+    };
+  };
+}
+
+
 export interface OctClassificationResponse {
   classification: {
     prediction: string;
@@ -91,4 +110,16 @@ private handleAuthError(error: HttpErrorResponse) {
   }
   return throwError(errorMessage);
 }
+
+// Add method inside ApiService
+submitSymptoms(formData: any): Observable<SymptomsPredictionResponse> {
+  return this.http.post<SymptomsPredictionResponse>(
+    `${this.apiUrl}/api/symptoms/predict`,
+    formData
+  ).pipe(
+    catchError(this.handleError)
+  );
+}
+
+
 }

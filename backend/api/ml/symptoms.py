@@ -1,3 +1,4 @@
+import os
 import pickle
 import numpy as np
 import pandas as pd
@@ -5,18 +6,27 @@ import shap
 import lime.lime_tabular
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import os
 from datetime import datetime
+from flask import Blueprint, request, jsonify
+from flask_cors import CORS
+import traceback
+
+# 🔹 Blueprint setup
+symptoms_bp = Blueprint("symptoms_bp", __name__)
+CORS(symptoms_bp)
+
+# 🔹 Set current absolute path
+current_dir = os.path.dirname(os.path.abspath(__file__))
 
 # 🔹 Load models
-with open('diagnosis_model.pkl', 'rb') as file:
+with open(os.path.join(current_dir, 'diagnosis_model.pkl'), 'rb') as file:
     diagnosis_model = pickle.load(file)
 
-with open('disease_model.pkl', 'rb') as file:
+with open(os.path.join(current_dir, 'disease_model.pkl'), 'rb') as file:
     disease_model = pickle.load(file)
 
 # 🔹 Load expected feature list
-with open('features_used.pkl', 'rb') as file:
+with open(os.path.join(current_dir, 'features_used.pkl'), 'rb') as file:
     expected_features = pickle.load(file)
 
 # 🔹 Disease label mapping
@@ -29,12 +39,12 @@ disease_mapping = {
     5: "Drusen"
 }
 
-# 🔹 Initialize SHAP Explainers (TreeExplainer is efficient for XGBoost)
+# 🔹 Initialize SHAP & LIME explainers
 shap_explainer_diagnosis = shap.TreeExplainer(diagnosis_model)
 shap_explainer_disease = shap.TreeExplainer(disease_model)
 
-# 🔹 Fit LIME Explainers using dummy data for structure
 dummy_data = np.zeros((1, len(expected_features)))
+
 lime_explainer_diagnosis = lime.lime_tabular.LimeTabularExplainer(
     training_data=dummy_data,
     feature_names=expected_features,
@@ -49,7 +59,9 @@ lime_explainer_disease = lime.lime_tabular.LimeTabularExplainer(
     mode="classification"
 )
 
-
+# ────────────────────────────────────────────────
+# 🔍 Core Prediction Logic
+# ────────────────────────────────────────────────
 def predict_with_explanations(form_data_dict):
     try:
         input_df = pd.DataFrame([form_data_dict])
@@ -59,310 +71,156 @@ def predict_with_explanations(form_data_dict):
             return {
                 "diagnosis": "Warning",
                 "message": "Prediction may be less accurate due to limited input."
-            }
+            }, input_df
 
-        # Step 1: Predict Diagnosis
         diagnosis_pred = diagnosis_model.predict(input_df)[0]
         diagnosis_label = "Disease Detected" if diagnosis_pred == 1 else "Healthy"
 
         result = {
             "diagnosis": diagnosis_label,
             "message": "No Eye Diseases Found." if diagnosis_pred == 0 else "Eye Disease Detected.",
-            "explanations": {
-                "diagnosis": {},
-                "disease": {}
-            }
+            "explanations": {"diagnosis": {}, "disease": {}}
         }
 
-        # Step 2: SHAP for Diagnosis
+        # SHAP for diagnosis
         shap_diag_vals = shap_explainer_diagnosis.shap_values(input_df)
-        shap_diag_expl = sorted(
-            zip(expected_features, shap_diag_vals[0]),
-            key=lambda x: abs(x[1]),
-            reverse=True
-        )[:10]
-        result["explanations"]["diagnosis"]["shap"] = shap_diag_expl
+        shap_diag_vals = shap_diag_vals[0] if isinstance(shap_diag_vals, list) else shap_diag_vals
+        shap_diag_vals = shap_diag_vals.flatten()
 
-        # Step 3: LIME for Diagnosis
+        shap_diag_expl = sorted(zip(expected_features, shap_diag_vals), key=lambda x: abs(x[1]), reverse=True)[:10]
+        result["explanations"]["diagnosis"]["shap"] = [(str(f), float(v)) for f, v in shap_diag_expl]
+
+        # LIME for diagnosis
         lime_diag_exp = lime_explainer_diagnosis.explain_instance(
             input_df.iloc[0].values,
             diagnosis_model.predict_proba,
             num_features=10
         )
-        lime_diag_expl = lime_diag_exp.as_list()
-        result["explanations"]["diagnosis"]["lime"] = lime_diag_expl
+        result["explanations"]["diagnosis"]["lime"] = [(str(f), float(v)) for f, v in lime_diag_exp.as_list()]
 
-        # If healthy, no need to explain disease
         if diagnosis_pred == 0:
             return result, input_df
 
-        # Step 4: Predict Disease
+        # Disease classification
         disease_pred = disease_model.predict(input_df)[0]
         disease_name = disease_mapping.get(disease_pred, "Unknown Disease")
         result["disease"] = disease_name
         result["message"] = f"Eye Disease Detected: {disease_name}"
-        result["explanations"]["disease"] = {}
- 
 
-        # Step 5: SHAP for Disease
+        # SHAP for disease
         shap_dis_all = shap_explainer_disease.shap_values(input_df)
+        shap_dis_vals = shap_dis_all[disease_pred] if isinstance(shap_dis_all, list) else shap_dis_all
+        shap_dis_vals = shap_dis_vals.flatten()
 
-        if isinstance(shap_dis_all, list) and disease_pred < len(shap_dis_all):
-              shap_dis_vals = shap_dis_all[disease_pred]
-        else:
-            shap_dis_vals = shap_dis_all[0]  # fallback to something safe to avoid crash
+        shap_dis_expl = sorted(zip(expected_features, shap_dis_vals), key=lambda x: abs(x[1]), reverse=True)[:10]
+        result["explanations"]["disease"]["shap"] = [(str(f), float(v)) for f, v in shap_dis_expl]
 
-        shap_dis_expl = sorted(
-            zip(expected_features, shap_dis_vals[0]),
-            key=lambda x: abs(x[1]),
-            reverse=True
-        )[:10]
-        result["explanations"]["disease"]["shap"] = shap_dis_expl
-
-        # Step 6: LIME for Disease
+        # LIME for disease
         lime_dis_exp = lime_explainer_disease.explain_instance(
             input_df.iloc[0].values,
             disease_model.predict_proba,
             num_features=10
         )
-        lime_dis_expl = lime_dis_exp.as_list()
-        result["explanations"]["disease"]["lime"] = lime_dis_expl
+        result["explanations"]["disease"]["lime"] = [(str(f), float(v)) for f, v in lime_dis_exp.as_list()]
 
         return result, input_df
 
     except Exception as e:
-        return {"error": str(e)}
+        traceback.print_exc()
+        return {"error": str(e)}, pd.DataFrame()
 
-
-
-
+# ────────────────────────────────────────────────
+# 🖼️ SHAP + LIME Visualization
+# ────────────────────────────────────────────────
 def explain_prediction_visually(result, input_df, title="", save_dir=None):
-    """
-    Converts SHAP and LIME results into easy-to-read explanations for patients.
-    Optionally visualize the SHAP values with a bar chart.
-    """
+    try:
+        if save_dir is None:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            save_dir = os.path.abspath(os.path.join(script_dir, '..', '..', 'static', 'xai'))
 
-    # ✅ Fix: Set absolute path to backend/static/xai
-    if save_dir is None:
-        script_dir = os.path.dirname(os.path.abspath(__file__))  # Current script path (backend/api/ml)
-        save_dir = os.path.abspath(os.path.join(script_dir, '..', '..', 'static', 'xai'))  # backend/static/xai
+        os.makedirs(save_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    os.makedirs(save_dir, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if "error" in result:
+            return None
 
-    if "error" in result:
-        print("⚠️ Error during prediction:", result["error"])
-        return
+        if result["diagnosis"] == "Healthy":
+            fig, ax = plt.subplots(figsize=(4, 4))
+            ax.set_facecolor('#2ecc71')
+            ax.set_xticks([])
+            ax.set_yticks([])
+            for spine in ax.spines.values():
+                spine.set_visible(False)
 
-    print(f"\n📋 Diagnosis Result: {result['diagnosis']}")
-    print(f"📝 Message: {result['message']}")
+            ax.text(0.5, 0.7, '😊', fontsize=60, ha='center', va='center')
+            ax.text(0.5, 0.45, 'You are Healthy!', fontsize=16, ha='center', va='center', color='white')
+            ax.text(0.5, 0.30, "No Signs of Eye Diseases Detected!", fontsize=12, ha='center', va='center', color='white')
+            plt.title("No Eye Disease Detected", fontsize=14, color='white')
+            plt.tight_layout()
 
-    if result["diagnosis"] == "Healthy":
-        print("\n The model did not detect any signs of eye disease.")
-        print("✅You appear to be healthy based on the provided features.")
-        
-        
-        fig, ax = plt.subplots(figsize=(4, 4))
-        ax.set_facecolor('#2ecc71')  # Bright green background
-        ax.set_xticks([])
-        ax.set_yticks([])
-        for spine in ax.spines.values():
-            spine.set_visible(False)
+            save_path = os.path.join(save_dir, f"healthy_summary_{timestamp}.png")
+            plt.savefig(save_path, bbox_inches='tight')
+            plt.close()
+            return os.path.basename(save_path)
 
-        ax.text(0.5, 0.7, '😊', fontsize=60, ha='center', va='center')
-        ax.text(0.5, 0.45, 'You are healthy!', fontsize=16, ha='center', va='center', color='white')
-        ax.text(0.5, 0.30, "No signs of eye disease detected!", fontsize=12, ha='center', va='center', color='white')
+        disease = result.get("disease", "Unknown")
+        shap_values = result["explanations"]["disease"]["shap"]
+        lime_values = result["explanations"]["disease"]["lime"]
 
-        plt.title("No Eye Disease Detected", fontsize=14, color='white')
-        plt.tight_layout()
+        if shap_values and lime_values:
+            shap_features, shap_importances = zip(*shap_values)
+            lime_features, lime_weights = zip(*lime_values)
 
-        save_path = os.path.join(save_dir, f"healthy_summary_{timestamp}.png")
-        plt.savefig(save_path, bbox_inches='tight')
-        print(f"📸 Saved to: {save_path}")
-        plt.show()
-        plt.close()
-        return
+            shap_colors = ['#ff7f0e' if val > 0 else '#1f77b4' for val in shap_importances]
+            lime_colors = ['#ff7f0e' if val > 0 else '#1f77b4' for val in lime_weights]
 
-    # --- If Disease Detected ---
-    disease = result.get("disease", "Unknown")
-    print(f"\n🧬 Disease Identified: {disease}")
+            fig, axes = plt.subplots(nrows=2, figsize=(10, 9))
+            plt.suptitle(f"Disease Identified – {disease}", fontsize=16, fontweight='bold')
 
-    print("\n SHAP Explanation (Top Contributing Factors):")
-    for feature, value in result["explanations"]["disease"]["shap"]:
-        impact = "increased" if value > 0 else "reduced"
-        print(f"• {feature} {impact} the likelihood of {disease} (impact: {round(abs(value), 4)})")
+            axes[0].barh(shap_features, shap_importances, color=shap_colors)
+            axes[0].set_title(f"SHAP - Top Features Influencing {disease}", fontsize=12)
+            axes[0].invert_yaxis()
+            axes[0].set_xlabel("SHAP Value (Impact)")
 
-    print("\n💡 LIME Explanation (Patient-friendly terms):")
-    for feature, weight in result["explanations"]["disease"]["lime"]:
-        direction = "supports" if weight > 0 else "reduces"
-        print(f"• {feature} {direction} the prediction for {disease} (weight: {round(weight, 4)})")
+            axes[1].barh(lime_features, lime_weights, color=lime_colors)
+            axes[1].set_title(f"LIME - Local Explanation for {disease}", fontsize=12)
+            axes[1].invert_yaxis()
+            axes[1].set_xlabel("LIME Weight (Impact)")
 
-    # --- SHAP and LIME Combined Visualization ---
-    shap_values = result["explanations"]["disease"]["shap"]
-    lime_values = result["explanations"]["disease"]["lime"]
+            plt.tight_layout(rect=[0, 0, 1, 0.95])
+            legend_patches = [
+                mpatches.Patch(color='#ff7f0e', label='Positive Contribution'),
+                mpatches.Patch(color='#1f77b4', label='Negative Contribution')
+            ]
+            plt.legend(handles=legend_patches, loc='lower right')
 
-    if shap_values and lime_values:
-        shap_features, shap_importances = zip(*shap_values)
-        shap_colors = ['#ff7f0e' if val > 0 else '#1f77b4' for val in shap_importances]
+            save_path = os.path.join(save_dir, f"{disease}_shap_lime_combined_{timestamp}.png")
+            plt.savefig(save_path, bbox_inches='tight')
+            plt.close()
+            return os.path.basename(save_path)
 
-        lime_features, lime_weights = zip(*lime_values)
-        lime_colors = ['#ff7f0e' if val > 0 else '#1f77b4' for val in lime_weights]
+        return None
+    except Exception as e:
+        traceback.print_exc()
+        return None
 
-        fig, axes = plt.subplots(nrows=2, figsize=(10, 9))
+# ────────────────────────────────────────────────
+# 🚀 API Route
+# ────────────────────────────────────────────────
+@symptoms_bp.route("/predict", methods=["POST"])
+def predict_route():
+    try:
+        data = request.json
+        print("📥 Received data:", data)
 
-        # Title for entire figure
-        plt.suptitle(f"Disease Identified – {disease}", fontsize=16, fontweight='bold')
+        result, input_df = predict_with_explanations(data)
 
-        # --- SHAP subplot ---
-        axes[0].barh(shap_features, shap_importances, color=shap_colors)
-        axes[0].set_title(f" SHAP - Top Features Influencing {disease}", fontsize=12)
-        axes[0].invert_yaxis()
-        axes[0].set_xlabel("SHAP Value (Impact)")
+        if isinstance(result, dict) and "error" in result:
+            return jsonify(result), 400
 
-        # --- LIME subplot ---
-        axes[1].barh(lime_features, lime_weights, color=lime_colors)
-        axes[1].set_title(f" LIME - Local Explanation for {disease}", fontsize=12)
-        axes[1].invert_yaxis()
-        axes[1].set_xlabel("LIME Weight (Impact)")
-
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        legend_patches = [
-            mpatches.Patch(color='#ff7f0e', label='Positive Contribution'),
-            mpatches.Patch(color='#1f77b4', label='Negative Contribution')
-        ]
-
-        plt.legend(handles=legend_patches, loc='lower right')
-
-        # ✅ Save figure
-        save_path = os.path.join(save_dir, f"{disease}_shap_lime_combined_{timestamp}.png")
-        plt.savefig(save_path, bbox_inches='tight')
-        print(f"📸 SHAP + LIME explanation saved to: {save_path}")
-        plt.show()
-        plt.close()
-    
-
-# 🔹 Run standalone tests
-if __name__ == "__main__":
-    
-
-    # 🔹 Sample Input for Glaucoma
- glaucoma_input = {'Age': 69.0, 'Intraocular Pressure (IOP)': 19.46, 'Cup-to-Disc Ratio (CDR)': 0.42, 'Pachymetry': 541.51, 'Visual Symptoms_tunnel vision': 1.0, 'Visual Symptoms_halos around lights': 0.0, 'Visual Symptoms_redness in the eye': 0.0, 'Visual Symptoms_blurred vision': 0.0, 'History of Diabetes': 0.0, 'Smoking Status': 0.0, 'Visual Acuity Test Results_20/100': 0.0, 'Visual Acuity Test Results_20/20': 0.0, 'Visual Acuity Test Results_20/30': 0.0, 'Visual Acuity Test Results_20/40': 0.0, 'Visual Acuity Test Results_20/50': 0.0, 'Visual Acuity Test Results_20/70': 0.0, 'Lens Opacity_mild': 0.0, 'Lens Opacity_moderate': 0.0, 'Lens Opacity_severe': 0.0, 'Glare Sensitivity_mild': 0.0, 'Glare Sensitivity_none': 0.0, 'Glare Sensitivity_severe': 0.0, 'UV Exposure_high': 0.0, 'UV Exposure_low': 0.0, 'UV Exposure_medium': 0.0, 'Visual Symptoms_frequent changes in vision': 0.0, 'Visual Symptoms_no visible symptoms': 0.0, 'Retinal Thickness': 248.16244677258328, 'Microaneurysms Count': 2.0, 'Hemorrhages Count': 3.0, 'Visual Symptoms_blotches of dark vision': 0.0, 'Visual Symptoms_fluffy white patches in vision': 0.0, 'Visual Symptoms_occasional blurred vision': 0.0, 'Visual Symptoms_small dark spots in vision': 0.0, 'Visual Symptoms_seeing dark spots': 0.0, 'Visual Symptoms_sudden vision loss': 0.0, 'Visual Symptoms_distorted vision': 0.0, 'Visual Symptoms_lines appear wavy': 0.0, 'Visual Symptoms_mild eye strain': 0.0, 'Visual Symptoms_difficulty reading': 0.0, 'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0, 'Optical Coherence Tomography (OCT) Results_Normal': 0.0, 'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0, 'Fluorescein Angiography Results_Early Neovascularization': 0.0, 'Fluorescein Angiography Results_No Neovascularization': 0.0, 'Visual Symptoms_floaters': 0.0, 'Visual Symptoms_color vision changes': 0.0, 'Visual Acuity Test Results_20/200': 0.0, 'Visual Acuity Test Results_20/60': 0.0, 'Visual Acuity Test Results_20/80': 0.0, 'Lens Status_Cortical cataract': 0.0, 'Lens Status_Normal': 0.0, 'Lens Status_Nuclear cataract': 0.0, 'Lens Status_Posterior subcapsular cataract': 0.0, 'BMI': 28.132697211774943, 'Blood Pressure': 144.0, 'Cholesterol Levels': 200.0, 'Visual Symptoms_blind spots': 0.0, 'Visual Symptoms_light sensitivity': 0.0, 'Visual Symptoms_night vision problems': 0.0} 
- 
-
-# 🔹 Sample Input for Cataract
- cataract_input = {'Age': 78.0, 'Intraocular Pressure (IOP)': 19.0, 'Cup-to-Disc Ratio (CDR)': 0.55, 'Pachymetry': 549.335, 'Visual Symptoms_tunnel vision': 0.0, 'Visual Symptoms_halos around lights': 0.0, 'Visual Symptoms_redness in the eye': 0.0, 'Visual Symptoms_blurred vision': 1.0, 'History of Diabetes': 0.0, 'Smoking Status': 0.0, 'Visual Acuity Test Results_20/100': 0.0, 'Visual Acuity Test Results_20/20': 0.0, 'Visual Acuity Test Results_20/30': 0.0, 'Visual Acuity Test Results_20/40': 0.0, 'Visual Acuity Test Results_20/50': 0.0, 'Visual Acuity Test Results_20/70': 1.0, 'Lens Opacity_mild': 0.0, 'Lens Opacity_moderate': 0.0, 'Lens Opacity_severe': 1.0, 'Glare Sensitivity_mild': 0.0, 'Glare Sensitivity_none': 1.0, 'Glare Sensitivity_severe': 0.0, 'UV Exposure_high': 0.0, 'UV Exposure_low': 0.0, 'UV Exposure_medium': 1.0, 'Visual Symptoms_frequent changes in vision': 0.0, 'Visual Symptoms_no visible symptoms': 0.0, 'Retinal Thickness': 248.16244677258328, 'Microaneurysms Count': 2.0, 'Hemorrhages Count': 3.0, 'Visual Symptoms_blotches of dark vision': 0.0, 'Visual Symptoms_fluffy white patches in vision': 0.0, 'Visual Symptoms_occasional blurred vision': 0.0, 'Visual Symptoms_small dark spots in vision': 0.0, 'Visual Symptoms_seeing dark spots': 0.0, 'Visual Symptoms_sudden vision loss': 0.0, 'Visual Symptoms_distorted vision': 0.0, 'Visual Symptoms_lines appear wavy': 0.0, 'Visual Symptoms_mild eye strain': 0.0, 'Visual Symptoms_difficulty reading': 0.0, 'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0, 'Optical Coherence Tomography (OCT) Results_Normal': 0.0, 'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0, 'Fluorescein Angiography Results_Early Neovascularization': 0.0, 'Fluorescein Angiography Results_No Neovascularization': 0.0, 'Visual Symptoms_floaters': 0.0, 'Visual Symptoms_color vision changes': 0.0, 'Visual Acuity Test Results_20/200': 0.0, 'Visual Acuity Test Results_20/60': 0.0, 'Visual Acuity Test Results_20/80': 0.0, 'Lens Status_Cortical cataract': 0.0, 'Lens Status_Normal': 0.0, 'Lens Status_Nuclear cataract': 0.0, 'Lens Status_Posterior subcapsular cataract': 0.0, 'BMI': 28.132697211774943, 'Blood Pressure': 144.0, 'Cholesterol Levels': 200.0, 'Visual Symptoms_blind spots': 0.0, 'Visual Symptoms_light sensitivity': 0.0, 'Visual Symptoms_night vision problems': 0.0} 
- 
-
-# 🔹 Sample Input for Diabetic Retinopathy
- diabetic_retinopathy_input = {'Age': 61.0, 'Intraocular Pressure (IOP)': 19.0, 'Cup-to-Disc Ratio (CDR)': 0.55, 'Pachymetry': 549.335, 'Visual Symptoms_tunnel vision': 0.0, 'Visual Symptoms_halos around lights': 0.0, 'Visual Symptoms_redness in the eye': 0.0, 'Visual Symptoms_blurred vision': 0.0, 'History of Diabetes': 0.0, 'Smoking Status': 1.0, 'Visual Acuity Test Results_20/100': 0.0, 'Visual Acuity Test Results_20/20': 0.0, 'Visual Acuity Test Results_20/30': 0.0, 'Visual Acuity Test Results_20/40': 0.0, 'Visual Acuity Test Results_20/50': 0.0, 'Visual Acuity Test Results_20/70': 0.0, 'Lens Opacity_mild': 0.0, 'Lens Opacity_moderate': 0.0, 'Lens Opacity_severe': 0.0, 'Glare Sensitivity_mild': 0.0, 'Glare Sensitivity_none': 0.0, 'Glare Sensitivity_severe': 0.0, 'UV Exposure_high': 0.0, 'UV Exposure_low': 0.0, 'UV Exposure_medium': 0.0, 'Visual Symptoms_frequent changes in vision': 0.0, 'Visual Symptoms_no visible symptoms': 0.0, 'Retinal Thickness': 203.441736961152, 'Microaneurysms Count': 4.0, 'Hemorrhages Count': 3.0, 'Visual Symptoms_blotches of dark vision': 0.0, 'Visual Symptoms_fluffy white patches in vision': 0.0, 'Visual Symptoms_occasional blurred vision': 1.0, 'Visual Symptoms_small dark spots in vision': 0.0, 'Visual Symptoms_seeing dark spots': 0.0, 'Visual Symptoms_sudden vision loss': 0.0, 'Visual Symptoms_distorted vision': 0.0, 'Visual Symptoms_lines appear wavy': 0.0, 'Visual Symptoms_mild eye strain': 0.0, 'Visual Symptoms_difficulty reading': 0.0, 'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0, 'Optical Coherence Tomography (OCT) Results_Normal': 0.0, 'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0, 'Fluorescein Angiography Results_Early Neovascularization': 0.0, 'Fluorescein Angiography Results_No Neovascularization': 0.0, 'Visual Symptoms_floaters': 0.0, 'Visual Symptoms_color vision changes': 0.0, 'Visual Acuity Test Results_20/200': 0.0, 'Visual Acuity Test Results_20/60': 0.0, 'Visual Acuity Test Results_20/80': 0.0, 'Lens Status_Cortical cataract': 0.0, 'Lens Status_Normal': 0.0, 'Lens Status_Nuclear cataract': 0.0, 'Lens Status_Posterior subcapsular cataract': 0.0, 'BMI': 28.132697211774943, 'Blood Pressure': 144.0, 'Cholesterol Levels': 200.0, 'Visual Symptoms_blind spots': 0.0, 'Visual Symptoms_light sensitivity': 0.0, 'Visual Symptoms_night vision problems': 0.0} 
- 
-
-# 🔹 Sample Input for CNV
- cnv_input = {'Age': 67.0, 'Intraocular Pressure (IOP)': 19.0, 'Cup-to-Disc Ratio (CDR)': 0.55, 'Pachymetry': 549.335, 'Visual Symptoms_tunnel vision': 0.0, 'Visual Symptoms_halos around lights': 0.0, 'Visual Symptoms_redness in the eye': 0.0, 'Visual Symptoms_blurred vision': 1.0, 'History of Diabetes': 0.0, 'Smoking Status': 0.0, 'Visual Acuity Test Results_20/100': 0.0, 'Visual Acuity Test Results_20/20': 0.0, 'Visual Acuity Test Results_20/30': 0.0, 'Visual Acuity Test Results_20/40': 0.0, 'Visual Acuity Test Results_20/50': 0.0, 'Visual Acuity Test Results_20/70': 0.0, 'Lens Opacity_mild': 0.0, 'Lens Opacity_moderate': 0.0, 'Lens Opacity_severe': 0.0, 'Glare Sensitivity_mild': 0.0, 'Glare Sensitivity_none': 0.0, 'Glare Sensitivity_severe': 0.0, 'UV Exposure_high': 0.0, 'UV Exposure_low': 0.0, 'UV Exposure_medium': 0.0, 'Visual Symptoms_frequent changes in vision': 0.0, 'Visual Symptoms_no visible symptoms': 0.0, 'Retinal Thickness': 248.16244677258328, 'Microaneurysms Count': 2.0, 'Hemorrhages Count': 3.0, 'Visual Symptoms_blotches of dark vision': 0.0, 'Visual Symptoms_fluffy white patches in vision': 0.0, 'Visual Symptoms_occasional blurred vision': 1.0, 'Visual Symptoms_small dark spots in vision': 0.0, 'Visual Symptoms_seeing dark spots': 0.0, 'Visual Symptoms_sudden vision loss': 0.0, 'Visual Symptoms_distorted vision': 0.0, 'Visual Symptoms_lines appear wavy': 0.0, 'Visual Symptoms_mild eye strain': 0.0, 'Visual Symptoms_difficulty reading': 0.0, 'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0, 'Optical Coherence Tomography (OCT) Results_Normal': 1.0, 'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0, 'Fluorescein Angiography Results_Early Neovascularization': 0.0, 'Fluorescein Angiography Results_No Neovascularization': 1.0, 'Visual Symptoms_floaters': 0.0, 'Visual Symptoms_color vision changes': 0.0, 'Visual Acuity Test Results_20/200': 0.0, 'Visual Acuity Test Results_20/60': 0.0, 'Visual Acuity Test Results_20/80': 0.0, 'Lens Status_Cortical cataract': 0.0, 'Lens Status_Normal': 0.0, 'Lens Status_Nuclear cataract': 0.0, 'Lens Status_Posterior subcapsular cataract': 0.0, 'BMI': 28.132697211774943, 'Blood Pressure': 144.0, 'Cholesterol Levels': 200.0, 'Visual Symptoms_blind spots': 0.0, 'Visual Symptoms_light sensitivity': 0.0, 'Visual Symptoms_night vision problems': 0.0} 
- 
-
-# 🔹 Sample Input for DME
- dme_input = {'Age': 39.0, 'Intraocular Pressure (IOP)': 11.0, 'Cup-to-Disc Ratio (CDR)': 0.55, 'Pachymetry': 549.335, 'Visual Symptoms_tunnel vision': 0.0, 'Visual Symptoms_halos around lights': 0.0, 'Visual Symptoms_redness in the eye': 0.0, 'Visual Symptoms_blurred vision': 0.0, 'History of Diabetes': 0.0, 'Smoking Status': 0.0, 'Visual Acuity Test Results_20/100': 0.0, 'Visual Acuity Test Results_20/20': 0.0, 'Visual Acuity Test Results_20/30': 0.0, 'Visual Acuity Test Results_20/40': 0.0, 'Visual Acuity Test Results_20/50': 0.0, 'Visual Acuity Test Results_20/70': 0.0, 'Lens Opacity_mild': 0.0, 'Lens Opacity_moderate': 0.0, 'Lens Opacity_severe': 0.0, 'Glare Sensitivity_mild': 0.0, 'Glare Sensitivity_none': 0.0, 'Glare Sensitivity_severe': 0.0, 'UV Exposure_high': 0.0, 'UV Exposure_low': 0.0, 'UV Exposure_medium': 0.0, 'Visual Symptoms_frequent changes in vision': 0.0, 'Visual Symptoms_no visible symptoms': 0.0, 'Retinal Thickness': 248.16244677258328, 'Microaneurysms Count': 2.0, 'Hemorrhages Count': 3.0, 'Visual Symptoms_blotches of dark vision': 0.0, 'Visual Symptoms_fluffy white patches in vision': 0.0, 'Visual Symptoms_occasional blurred vision': 0.0, 'Visual Symptoms_small dark spots in vision': 0.0, 'Visual Symptoms_seeing dark spots': 0.0, 'Visual Symptoms_sudden vision loss': 0.0, 'Visual Symptoms_distorted vision': 0.0, 'Visual Symptoms_lines appear wavy': 0.0, 'Visual Symptoms_mild eye strain': 0.0, 'Visual Symptoms_difficulty reading': 0.0, 'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0, 'Optical Coherence Tomography (OCT) Results_Normal': 0.0, 'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0, 'Fluorescein Angiography Results_Early Neovascularization': 0.0, 'Fluorescein Angiography Results_No Neovascularization': 0.0, 'Visual Symptoms_floaters': 0.0, 'Visual Symptoms_color vision changes': 0.0, 'Visual Acuity Test Results_20/200': 0.0, 'Visual Acuity Test Results_20/60': 0.0, 'Visual Acuity Test Results_20/80': 0.0, 'Lens Status_Cortical cataract': 0.0, 'Lens Status_Normal': 0.0, 'Lens Status_Nuclear cataract': 0.0, 'Lens Status_Posterior subcapsular cataract': 0.0, 'BMI': 28.132697211774943, 'Blood Pressure': 144.0, 'Cholesterol Levels': 200.0, 'Visual Symptoms_blind spots': 0.0, 'Visual Symptoms_light sensitivity': 0.0, 'Visual Symptoms_night vision problems': 0.0}
- 
-
-# 🔹 Sample Input for Drusen
- drusen_input = {'Age': 89.0, 'Intraocular Pressure (IOP)': 19.0, 'Cup-to-Disc Ratio (CDR)': 0.55, 'Pachymetry': 549.335, 'Visual Symptoms_tunnel vision': 0.0, 'Visual Symptoms_halos around lights': 0.0, 'Visual Symptoms_redness in the eye': 0.0, 'Visual Symptoms_blurred vision': 0.0, 'History of Diabetes': 0.0, 'Smoking Status': 1.0, 'Visual Acuity Test Results_20/100': 0.0, 'Visual Acuity Test Results_20/20': 0.0, 'Visual Acuity Test Results_20/30': 0.0, 'Visual Acuity Test Results_20/40': 0.0, 'Visual Acuity Test Results_20/50': 0.0, 'Visual Acuity Test Results_20/70': 0.0, 'Lens Opacity_mild': 0.0, 'Lens Opacity_moderate': 0.0, 'Lens Opacity_severe': 0.0, 'Glare Sensitivity_mild': 0.0, 'Glare Sensitivity_none': 0.0, 'Glare Sensitivity_severe': 0.0, 'UV Exposure_high': 0.0, 'UV Exposure_low': 0.0, 'UV Exposure_medium': 0.0, 'Visual Symptoms_frequent changes in vision': 0.0, 'Visual Symptoms_no visible symptoms': 0.0, 'Retinal Thickness': 248.16244677258328, 'Microaneurysms Count': 2.0, 'Hemorrhages Count': 3.0, 'Visual Symptoms_blotches of dark vision': 0.0, 'Visual Symptoms_fluffy white patches in vision': 0.0, 'Visual Symptoms_occasional blurred vision': 0.0, 'Visual Symptoms_small dark spots in vision': 0.0, 'Visual Symptoms_seeing dark spots': 0.0, 'Visual Symptoms_sudden vision loss': 0.0, 'Visual Symptoms_distorted vision': 1.0, 'Visual Symptoms_lines appear wavy': 0.0, 'Visual Symptoms_mild eye strain': 0.0, 'Visual Symptoms_difficulty reading': 0.0, 'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0, 'Optical Coherence Tomography (OCT) Results_Normal': 0.0, 'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0, 'Fluorescein Angiography Results_Early Neovascularization': 0.0, 'Fluorescein Angiography Results_No Neovascularization': 0.0, 'Visual Symptoms_floaters': 0.0, 'Visual Symptoms_color vision changes': 0.0, 'Visual Acuity Test Results_20/200': 0.0, 'Visual Acuity Test Results_20/60': 0.0, 'Visual Acuity Test Results_20/80': 0.0, 'Lens Status_Cortical cataract': 0.0, 'Lens Status_Normal': 0.0, 'Lens Status_Nuclear cataract': 0.0, 'Lens Status_Posterior subcapsular cataract': 0.0, 'BMI': 27.7, 'Blood Pressure': 178.0, 'Cholesterol Levels': 229.0, 'Visual Symptoms_blind spots': 0.0, 'Visual Symptoms_light sensitivity': 0.0, 'Visual Symptoms_night vision problems': 0.0} 
-
-#sample input for HealthyPatient
- healthy_input = {
-    'Age': 35.0,
-    'Intraocular Pressure (IOP)': 15.0,
-    'Cup-to-Disc Ratio (CDR)': 0.3,
-    'Pachymetry': 550.0,
-    'Visual Symptoms_tunnel vision': 0.0,
-    'Visual Symptoms_halos around lights': 0.0,
-    'Visual Symptoms_redness in the eye': 0.0,
-    'Visual Symptoms_blurred vision': 0.0,
-    'History of Diabetes': 0.0,
-    'Smoking Status': 0.0,
-    'Visual Acuity Test Results_20/20': 1.0,
-    'Visual Acuity Test Results_20/30': 0.0,
-    'Visual Acuity Test Results_20/40': 0.0,
-    'Visual Acuity Test Results_20/50': 0.0,
-    'Visual Acuity Test Results_20/70': 0.0,
-    'Visual Acuity Test Results_20/100': 0.0,
-    'Lens Opacity_mild': 0.0,
-    'Lens Opacity_moderate': 0.0,
-    'Lens Opacity_severe': 0.0,
-    'Glare Sensitivity_mild': 0.0,
-    'Glare Sensitivity_none': 1.0,
-    'Glare Sensitivity_severe': 0.0,
-    'UV Exposure_high': 0.0,
-    'UV Exposure_medium': 0.0,
-    'UV Exposure_low': 1.0,
-    'Visual Symptoms_frequent changes in vision': 0.0,
-    'Visual Symptoms_no visible symptoms': 1.0,
-    'Retinal Thickness': 250.0,
-    'Microaneurysms Count': 0.0,
-    'Hemorrhages Count': 0.0,
-    'Visual Symptoms_blotches of dark vision': 0.0,
-    'Visual Symptoms_fluffy white patches in vision': 0.0,
-    'Visual Symptoms_occasional blurred vision': 0.0,
-    'Visual Symptoms_small dark spots in vision': 0.0,
-    'Visual Symptoms_seeing dark spots': 0.0,
-    'Visual Symptoms_sudden vision loss': 0.0,
-    'Visual Symptoms_distorted vision': 0.0,
-    'Visual Symptoms_lines appear wavy': 0.0,
-    'Visual Symptoms_mild eye strain': 0.0,
-    'Visual Symptoms_difficulty reading': 0.0,
-    'Optical Coherence Tomography (OCT) Results_Early CNV': 0.0,
-    'Optical Coherence Tomography (OCT) Results_Normal': 1.0,
-    'Optical Coherence Tomography (OCT) Results_Scarred/End-stage CNV': 0.0,
-    'Fluorescein Angiography Results_Early Neovascularization': 0.0,
-    'Fluorescein Angiography Results_No Neovascularization': 1.0,
-    'Visual Symptoms_floaters': 0.0,
-    'Visual Symptoms_color vision changes': 0.0,
-    'Visual Acuity Test Results_20/200': 0.0,
-    'Visual Acuity Test Results_20/60': 0.0,
-    'Visual Acuity Test Results_20/80': 0.0,
-    'Lens Status_Cortical cataract': 0.0,
-    'Lens Status_Normal': 1.0,
-    'Lens Status_Nuclear cataract': 0.0,
-    'Lens Status_Posterior subcapsular cataract': 0.0,
-    'BMI': 22.5,
-    'Blood Pressure': 120.0,
-    'Cholesterol Levels': 170.0,
-    'Visual Symptoms_blind spots': 0.0,
-    'Visual Symptoms_light sensitivity': 0.0,
-    'Visual Symptoms_night vision problems': 0.0
-}
-
-
-
-
-print("\n🧪 Glaucoma Test:")
-result, input_df = predict_with_explanations(glaucoma_input)
-explain_prediction_visually(result, input_df, title="Glaucoma Test")
-
-print("\n🧪 Cataract Test:")
-result, input_df = predict_with_explanations(cataract_input)
-explain_prediction_visually(result,input_df, title="Cataract Test")
-
-
-print("\n🧪 Diabetic Retinopathy Test:")
-result, input_df = predict_with_explanations(diabetic_retinopathy_input)
-explain_prediction_visually(result, input_df, title="Diabetic Retinopathy Test")
-
-
-print("\n🧪 CNV Test:")
-result, input_df = predict_with_explanations(cnv_input)
-explain_prediction_visually(result, input_df, title="CNV Test")
-
-
-print("\n🧪 DME Test:")
-result, input_df = predict_with_explanations(dme_input)
-explain_prediction_visually(result, input_df, title="DME Test")
-
-
-print("\n🧪 Drusen Test:")
-result, input_df= predict_with_explanations(drusen_input)
-explain_prediction_visually(result, input_df, title="Drusen Test")
-
-print("\n🧪 Healthy Test:")
-result, input_df = predict_with_explanations(healthy_input)
-explain_prediction_visually(result, input_df, title="Healthy")
+        filename = explain_prediction_visually(result, input_df)
+        result["xai_image"] = filename
+        return jsonify(result)
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
