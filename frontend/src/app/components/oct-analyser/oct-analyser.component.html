@@ -32,7 +32,8 @@
   <!-- Loading Animation -->
   <div *ngIf="isLoading" id="loading">
     <div class="spinner"></div>
-    <p>Analyzing Image...</p>
+    <p>Processing your OCT scan...</p>
+    <p class="loading-subtext">This may take a few moments</p>
   </div>
 
   <!-- AI Analysis Result -->
@@ -40,18 +41,32 @@
     <h3>AI Diagnosis</h3>
     <div class="diagnosis-result">
       <span class="diagnosis-label">{{ diagnosis }}</span>
-      <span class="confidence">(Confidence: {{ confidence | percent }})</span>
+      <span class="confidence">(Confidence: {{ confidence | percent:'1.0-2' }})</span>
     </div>
 
     <div class="xai-explanations">
       <div class="explanation">
         <h3>SHAP Explanation</h3>
-        <img [src]="shapImage" *ngIf="shapImage" alt="SHAP Explanation" class="explanation-image" />
+        <div *ngIf="loadingShap" class="spinner-container">
+          <div class="spinner"></div>
+          <p>Generating SHAP visualization...</p>
+        </div>
+        <img [src]="shapImage" 
+             *ngIf="shapImage && !loadingShap" 
+             alt="SHAP Explanation" 
+             class="explanation-image" />
       </div>
       
       <div class="explanation">
         <h3>LIME Explanation</h3>
-        <img [src]="limeImage" *ngIf="limeImage" alt="LIME Explanation" class="explanation-image" />
+        <div *ngIf="loadingLime" class="spinner-container">
+          <div class="spinner"></div>
+          <p>Generating LIME visualization...</p>
+        </div>
+        <img [src]="limeImage" 
+             *ngIf="limeImage && !loadingLime" 
+             alt="LIME Explanation" 
+             class="explanation-image" />
       </div>
     </div>
   </div>

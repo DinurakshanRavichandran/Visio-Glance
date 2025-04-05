@@ -154,7 +154,7 @@ def analyze_image(image_path):
         abs_path = os.path.join(BACKEND_DIR, rel_path)
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"File missing: {abs_path}")
-        Image.open(abs_path).show()
+        #Image.open(abs_path).show()
     
     return {
         "classification": classification,

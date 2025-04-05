@@ -4,6 +4,11 @@
     The Fundus scanner helps diagnose retinal diseases such as diabetic retinopathy and glaucoma. Upload a fundus image for AI-based analysis.
   </p>
 
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
   <!-- Upload Box -->
   <div class="upload-box" (click)="fileInput.click()">
     <input
@@ -21,27 +26,46 @@
   <!-- Display Uploaded Image -->
   <div *ngIf="imagePreview" id="image-preview-container">
     <h3>Uploaded Fundus Image</h3>
-    <img [src]="imagePreview" alt="Uploaded Image" id="image-preview" />
+    <img [src]="imagePreview" alt="Uploaded Image" class="preview-image" />
   </div>
 
   <!-- Loading Animation -->
   <div *ngIf="isLoading" id="loading">
     <div class="spinner"></div>
-    <p>Processing Image...</p>
+    <p>Analyzing Fundus Image...</p>
+    <p class="loading-subtext">This may take a few moments</p>
   </div>
 
   <!-- AI Analysis Result -->
   <div *ngIf="diagnosis" id="result-container">
     <h3>AI Diagnosis</h3>
-    <p id="diagnosis-text">{{ diagnosis }}</p>
-    <div class="explanations-container">
+    <div class="diagnosis-result">
+      <span class="diagnosis-label">{{ diagnosis }}</span>
+    </div>
+
+    <div class="xai-explanations">
       <div class="explanation">
-        <h4>LIME Explanation</h4>
-        <img [src]="limeExplanation" alt="LIME Explanation" *ngIf="limeExplanation" />
+        <h3>LIME Explanation</h3>
+        <div *ngIf="loadingLime" class="spinner-container">
+          <div class="spinner"></div>
+          <p>Generating LIME visualization...</p>
+        </div>
+        <img [src]="limeExplanation" 
+             *ngIf="limeExplanation && !loadingLime" 
+             alt="LIME Explanation" 
+             class="explanation-image" />
       </div>
+      
       <div class="explanation">
-        <h4>Grad-CAM Explanation</h4>
-        <img [src]="gradcamExplanation" alt="Grad-CAM Explanation" *ngIf="gradcamExplanation" />
+        <h3>Grad-CAM Explanation</h3>
+        <div *ngIf="loadingGradcam" class="spinner-container">
+          <div class="spinner"></div>
+          <p>Generating Grad-CAM visualization...</p>
+        </div>
+        <img [src]="gradcamExplanation" 
+             *ngIf="gradcamExplanation && !loadingGradcam" 
+             alt="Grad-CAM Explanation" 
+             class="explanation-image" />
       </div>
     </div>
   </div>

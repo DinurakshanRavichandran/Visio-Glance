@@ -18,7 +18,7 @@ def ask_perplexity(prompt: str) -> str:
         "model": "sonar",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.7,
-        "max_tokens": 100
+        "max_tokens":300
     }
     
     try:

@@ -31,6 +31,8 @@ export class OctAnalyserComponent {
   errorMessage: string | null = null;
   shapImage: string | null = null;
   limeImage: string | null = null;
+  loadingShap = false;
+  loadingLime = false;
 
   constructor(private apiService: ApiService) {}
 
@@ -38,8 +40,8 @@ export class OctAnalyserComponent {
     const input = event.target as HTMLInputElement;
     if (input.files?.length) {
       const file = input.files[0];
+      this.resetState();
       this.fileName = file.name;
-      this.errorMessage = null;
       
       // Preview image
       const reader = new FileReader();
@@ -50,13 +52,19 @@ export class OctAnalyserComponent {
     }
   }
 
-  analyzeImage(file: File): void {
-    this.isLoading = true;
+  private resetState(): void {
+    this.errorMessage = null;
     this.diagnosis = null;
     this.confidence = null;
     this.shapImage = null;
     this.limeImage = null;
+    this.loadingShap = false;
+    this.loadingLime = false;
+  }
 
+  analyzeImage(file: File): void {
+    this.isLoading = true;
+    
     this.apiService.oct_classifyImage(file).subscribe({
       next: (response: OctClassificationResponse) => {
         this.diagnosis = response.classification.prediction;
@@ -64,21 +72,42 @@ export class OctAnalyserComponent {
         this.loadXaiImages(response.explanations.shap, response.explanations.lime);
       },
       error: (err: any) => {
-        console.error(err);
-        this.errorMessage = err.message || 'Failed to analyze image. Please try again.';
+        console.error('Analysis error:', err);
+        this.errorMessage = err.error?.message || err.message || 'Failed to analyze image. Please try again.';
         this.isLoading = false;
-      },
-      complete: () => this.isLoading = false
+      }
     });
   }
 
   private loadXaiImages(shapUrl: string, limeUrl: string): void {
-    this.apiService.oct_getXaiImage(shapUrl).subscribe((blob: Blob) => {
-      this.shapImage = URL.createObjectURL(blob);
+    this.loadingShap = true;
+    this.loadingLime = true;
+
+    this.apiService.oct_getXaiImage(shapUrl).subscribe({
+      next: (blob: Blob) => {
+        this.shapImage = URL.createObjectURL(blob);
+      },
+      error: (err) => {
+        console.error('SHAP image load error:', err);
+        this.errorMessage = 'Failed to load SHAP explanation.';
+        this.loadingShap = false;
+      },
+      complete: () => this.loadingShap = false
     });
 
-    this.apiService.oct_getXaiImage(limeUrl).subscribe((blob: Blob) => {
-      this.limeImage = URL.createObjectURL(blob);
+    this.apiService.oct_getXaiImage(limeUrl).subscribe({
+      next: (blob: Blob) => {
+        this.limeImage = URL.createObjectURL(blob);
+      },
+      error: (err) => {
+        console.error('LIME image load error:', err);
+        this.errorMessage = 'Failed to load LIME explanation.';
+        this.loadingLime = false;
+      },
+      complete: () => {
+        this.loadingLime = false;
+        this.isLoading = false; // Only set to false when both images are done loading
+      }
     });
   }
 }
