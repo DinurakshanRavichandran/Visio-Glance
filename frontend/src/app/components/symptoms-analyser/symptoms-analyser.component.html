@@ -1,0 +1,239 @@
+<div class="container">
+  <div class="main-content">
+    <h1>Eye Health Diagnostic Portal</h1>
+
+    <div class="paragraph-box">
+      <p class="intro">
+        Welcome to our cutting-edge <strong>Eye Health Diagnostic Portal</strong>, where your vision's future becomes clearer today!<br>
+        We provide a sophisticated diagnostic tool that evaluates <strong>Visual Symptoms</strong> and <strong>Medical History</strong> to predict the likelihood of Six major eye diseases:
+      </p>
+
+      <div class="disease-grid">
+        <div class="disease-item">Glaucoma</div>
+        <div class="disease-item">Cataract</div>
+        <div class="disease-item">Diabetic Retinopathy</div>
+        <div class="disease-item">CNV <span>(Choroidal Neovascularization)</span></div>
+        <div class="disease-item">DME <span>(Diabetic Macular Edema)</span></div>
+        <div class="disease-item">Drusen</div>
+      </div>
+
+      <p class="intro">
+        Your privacy and the protection of your sensitive health information are our top priorities.<br>
+        Let us help you see a brighter tomorrow by taking the first step with us today!
+      </p>
+    </div>
+
+    <!-- Angular Reactive Form -->
+    <form [formGroup]="symptomsForm" (ngSubmit)="onSubmit()" id="diagnostic-form">
+      <div class="form-grid">
+        <!-- SECTION: Eye Metrics -->
+        <div class="form-section">Eye Metrics</div>
+
+        <div class="form-group">
+          <label>Age (1-100):<span class="required">*</span></label>
+          <input type="number" formControlName="age" min="1" max="100" placeholder="Enter your age" />
+        </div>
+
+        <div class="form-group">
+          <label>Intraocular Pressure (10.00 - 25.00):</label>
+          <input type="number" formControlName="iop" min="10" max="25" step="0.01" placeholder="Enter IOP value" />
+        </div>
+
+        <div class="form-group">
+          <label>Cup-to-Disc Ratio (0.3 - 0.8):</label>
+          <input type="number" formControlName="cdr" min="0.3" max="0.8" step="0.01" placeholder="Enter CDR value" />
+        </div>
+
+        <div class="form-group">
+          <label>Pachymetry (500.01 - 599.99):</label>
+          <input type="number" formControlName="pachymetry" min="500.01" max="599.99" step="0.01" placeholder="Enter Pachymetry" />
+        </div>
+
+        <div class="form-group">
+          <label>Retinal Thickness (57.181233 - 500.00000):</label>
+          <input type="number" formControlName="retinalThickness" min="57.181233" max="500.00000" step="0.000001" placeholder="Enter Retinal Thickness" />
+        </div>
+
+        <!-- SECTION: Visual Assessment -->
+        <div class="form-section">Visual Assessment</div>
+
+        <div class="form-group full-width">
+          <label>Visual Symptoms:<span class="required">*</span></label>
+          <div class="symptoms-multi-select">
+            <input
+              type="text"
+              id="symptoms-input"
+              placeholder="Select symptoms"
+              [value]="selectedSymptoms.join(', ') || 'Select symptoms'"
+              readonly
+              (click)="toggleSymptomsDropdown($event)"
+            />
+            <div class="symptoms-dropdown" *ngIf="dropdownVisible" (click)="$event.stopPropagation()">
+              <div class="symptoms-options">
+                <label *ngFor="let symptom of allSymptoms">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedSymptoms.includes(symptom)"
+                    (change)="onSymptomToggle(symptom)"
+                  />
+                  {{ symptom }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Visual Acuity Test Results:</label>
+          <select id="visualAcuity" title="Visual Acuity Test Results" formControlName="visualAcuity">
+            <option value="">Select</option>
+            <option *ngFor="let acuity of ['20/20','20/30','20/40','20/50','20/70','20/100','20/160','20/180','20/200']" [value]="acuity">
+              {{ acuity }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Lens Opacity:</label>
+          <select formControlName="lensOpacity" title="Lens Opacity" >
+            <option value="">Select</option>
+            <option value="mild">Mild</option>
+            <option value="moderate">Moderate</option>
+            <option value="severe">Severe</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Glare Sensitivity:</label>
+          <select formControlName="glare" title="Glare Sensitivity">
+            <option value="">Select</option>
+            <option value="none">None</option>
+            <option value="mild">Mild</option>
+            <option value="severe">Severe</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>UV Exposure:</label>
+          <select formControlName="uv" title="UV Exposure" >
+            <option value="">Select</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <!-- SECTION: Medical History -->
+        <div class="form-section">Medical History</div>
+
+        <div class="form-group">
+          <label>History of Diabetes:</label>
+          <select formControlName="diabetes" title="History of Diabetes">
+            <option value="">Select</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Microaneurysms Count (0-12):</label>
+          <input type="number" formControlName="microaneurysms" min="0" max="12" placeholder="Enter count" />
+        </div>
+
+        <div class="form-group">
+          <label>Hemorrhages Count (0-11):</label>
+          <input type="number" formControlName="hemorrhages" min="0" max="11" placeholder="Enter count" />
+        </div>
+
+        <div class="form-group">
+          <label>Lens Status:</label>
+          <select formControlName="lensStatus" title="Lens Status">
+            <option value="">Select</option>
+            <option value="cortical">Cortical Cataract</option>
+            <option value="normal">Normal</option>
+            <option value="nuclear">Nuclear Cataract</option>
+            <option value="posterior">Posterior Subcapsular Cataract</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>OCT Results:</label>
+          <select formControlName="oct" title="OCT Results">
+            <option value="">Select</option>
+            <option value="early">Early CNV</option>
+            <option value="normal">Normal</option>
+            <option value="scarred">Scarred/End-stage CNV</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Fluorescein Angiography Results:</label>
+          <select formControlName="fluorescein" title="Fluorescein Angiography Results">
+            <option value="">Select</option>
+            <option value="early">Early Neovascularization</option>
+            <option value="no">No Neovascularization</option>
+          </select>
+        </div>
+
+        <!-- SECTION: Lifestyle & Risk Factors -->
+        <div class="form-section">Lifestyle & Risk Factors</div>
+
+        <div class="form-group">
+          <label>Smoking Status:</label>
+          <select formControlName="smoking" title="Smoking Status">
+            <option value="">Select</option>
+            <option value="smoker">Smoker</option>
+            <option value="non-smoker">Non-Smoker</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>BMI (9.1 - 50.0):</label>
+          <input type="number" formControlName="bmi" min="9.1" max="50.0" step="0.1" placeholder="Enter BMI" />
+        </div>
+
+        <div class="form-group">
+          <label>Blood Pressure (110 - 200):</label>
+          <input type="number" formControlName="bp" min="110" max="200" placeholder="Enter BP" />
+        </div>
+
+        <div class="form-group">
+          <label>Cholesterol Levels (150 - 250):</label>
+          <input type="number" formControlName="cholesterol" min="150" max="250" placeholder="Enter Cholesterol Levels" />
+        </div>
+      </div>
+
+      <!-- 🔘 Button Container -->
+      <div class="button-group">
+          <button type="submit" class="submit-button">Submit</button>
+          <button type="button" class="reset-button" (click)="onReset()">Reset</button>
+      </div>
+
+
+    </form>
+
+    <!-- ⚠️ Warning Message -->
+    <div *ngIf="warningMessage" class="warning-box">
+      <p class="warning-text"> {{ warningMessage }}</p>
+    </div>
+
+    <!-- 🚨 Error Message -->
+    <div *ngIf="errorMessage" class="error-box">
+      <p class="error-text">❌ {{ errorMessage }}</p>
+    </div>
+
+    <!-- ✅ Prediction Results -->
+    <div class="result-box" *ngIf="predictionResult">
+      <h2>🧾 Diagnosis Result</h2>
+      <p><strong>Status:</strong> {{ predictionResult.diagnosis }}</p>
+      <p><strong>Message:</strong> {{ predictionResult.message }}</p>
+      <p *ngIf="predictionResult.disease"><strong>Disease:</strong> {{ predictionResult.disease }}</p>
+
+      <div *ngIf="xaiImageUrl" class="image-preview">
+        <h3 *ngIf="predictionResult.diagnosis !== 'Healthy'">🧠 Visual Explanation (SHAP + LIME)</h3>
+        <img [src]="xaiImageUrl" alt="Explanation Chart" />
+      </div>
+    </div>
+
+  </div>
+</div>

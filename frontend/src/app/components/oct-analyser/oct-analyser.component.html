@@ -1,0 +1,73 @@
+<div class="upload-section">
+  <h2>Upload OCT Image</h2>
+  <p>
+    The Optical Coherence Tomography (OCT) scanner helps diagnose retinal diseases such as macular degeneration and diabetic retinopathy. Upload an OCT scan for AI-based analysis.
+  </p>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Upload Box -->
+  <div class="upload-box" (click)="fileInput.click()">
+    <input
+      type="file"
+      #fileInput
+      (change)="onFileSelected($event)"
+      accept="image/*"
+      style="display: none;"
+    />
+    <label>Choose an OCT Image</label>
+  </div>
+
+  <p id="file-name">{{ fileName || 'No file selected' }}</p>
+
+  <!-- Display Uploaded Image -->
+  <div *ngIf="imagePreview" id="image-preview-container">
+    <h3>Uploaded OCT Image</h3>
+    <img [src]="imagePreview" alt="Uploaded Image" class="preview-image" />
+  </div>
+
+  <!-- Loading Animation -->
+  <div *ngIf="isLoading" id="loading">
+    <div class="spinner"></div>
+    <p>Processing your OCT scan...</p>
+    <p class="loading-subtext">This may take a few moments</p>
+  </div>
+
+  <!-- AI Analysis Result -->
+  <div *ngIf="diagnosis" id="result-container">
+    <h3>AI Diagnosis</h3>
+    <div class="diagnosis-result">
+      <span class="diagnosis-label">{{ diagnosis }}</span>
+      <span class="confidence">(Confidence: {{ confidence | percent:'1.0-2' }})</span>
+    </div>
+
+    <div class="xai-explanations">
+      <div class="explanation">
+        <h3>SHAP Explanation</h3>
+        <div *ngIf="loadingShap" class="spinner-container">
+          <div class="spinner"></div>
+          <p>Generating SHAP visualization...</p>
+        </div>
+        <img [src]="shapImage" 
+             *ngIf="shapImage && !loadingShap" 
+             alt="SHAP Explanation" 
+             class="explanation-image" />
+      </div>
+      
+      <div class="explanation">
+        <h3>LIME Explanation</h3>
+        <div *ngIf="loadingLime" class="spinner-container">
+          <div class="spinner"></div>
+          <p>Generating LIME visualization...</p>
+        </div>
+        <img [src]="limeImage" 
+             *ngIf="limeImage && !loadingLime" 
+             alt="LIME Explanation" 
+             class="explanation-image" />
+      </div>
+    </div>
+  </div>
+</div>

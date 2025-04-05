@@ -1,0 +1,21 @@
+.impact-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 50px;
+    background: white;
+  }
+  
+  .impact-content {
+    max-width: 50%;
+  }
+  
+  .impact-content h2 {
+    font-size: 28px;
+    color: #007bff;
+  }
+  
+  .impact-image img {
+    max-width: 400px;
+    border-radius: 10px;
+  }

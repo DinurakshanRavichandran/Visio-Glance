@@ -1,0 +1,24 @@
+.team-member {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 220px;
+    text-align: center;
+  }
+  
+  .team-member img {
+    width: 100%;
+    border-radius: 10px;
+  }
+  
+  .team-member h3 {
+    font-size: 18px;
+    margin-top: 10px;
+    color: #0056b3;
+  }
+  
+  .team-member p {
+    font-size: 14px;
+    color: #666;
+  }

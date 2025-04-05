@@ -1,0 +1,29 @@
+<div class="chat-container">
+  <div class="chat-section">
+    <div class="chat-header">
+      <h2>AI Medical Assistant</h2>
+    </div>
+    
+    <div class="chat-window" #chatWindow>
+      @for (message of messages; track $index) {
+        <div class="message" 
+             [ngClass]="{'user-message': message.isUser, 'bot-message': !message.isUser}">
+          <p>{{ message.content }}</p>
+        </div>
+      }
+      @if (isLoading) {
+        <div class="message bot-message">
+          <p>Thinking...</p>
+        </div>
+      }
+    </div>
+
+    <div class="chat-input">
+      <input type="text" 
+             [(ngModel)]="userInput" 
+             placeholder="Type a message..."
+             (keyup.enter)="sendMessage()">
+      <button (click)="sendMessage()" [disabled]="isLoading">Send</button>
+    </div>
+  </div>
+</div>

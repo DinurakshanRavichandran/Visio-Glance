@@ -1,0 +1,16 @@
+<section class="team-section">
+    <h2>Meet Our Team</h2>
+    <p class="team-intro">
+      Discover the Innovators Behind the Lens:
+      Our dynamic ensemble of visionary AI experts, data science specialists, are on a mission to redefine the future of eye care. Together, we're pioneering groundbreaking solutions to transform eye disease diagnosis, making it smarter, faster, and more accurate. Meet the minds driving innovation in eye health.
+    </p>
+    <div class="team-container">
+      <app-team-member
+        *ngFor="let member of teamMembers"
+        [name]="member.name"
+        [role]="member.role"
+        [image]="member.image">
+      </app-team-member>
+    </div>
+  </section>
+  

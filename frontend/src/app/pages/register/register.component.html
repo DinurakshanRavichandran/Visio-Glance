@@ -1,0 +1,74 @@
+<div class="register-container">
+    <!-- Video Section (Left) -->
+    <div class="video-section">
+        <video autoplay loop muted playsinline>
+            <source src="assets/videos/registerbackground.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
+        <!-- Text Overlay -->
+        <div class="video-text-overlay">
+            <h1>Visio Glance</h1>
+            <p>Bringing AI with Explainability</p>
+        </div>
+    </div>
+
+    <!-- Form Section (Right) -->
+    <div class="form-section">
+        <!-- Background Image -->
+        <img src="assets/images/registerbackground.jpg" class="background-image">
+
+        <!-- Visio Glance Branding -->
+        <div class="form-header">
+            <h1>Visio Glance</h1>
+            <p>Empowering AI for Smarter Decisions</p>
+        </div>
+
+        <!-- Register Form -->
+        <div class="form-content">
+            <h2>Create an Account</h2>
+            
+            <!-- Error Message Container -->
+            <div *ngIf="errorMessage" class="error-message">
+                {{ errorMessage }}
+            </div>
+
+            <form [formGroup]="registerForm" (ngSubmit)="onRegister()">
+                <!-- Username Field -->
+                <input type="text" formControlName="username" placeholder="Username" required>
+                <div *ngIf="form['username'].invalid && (form['username'].dirty || submitted)" class="validation-error">
+                    <small *ngIf="form['username'].errors?.['required']">Username is required</small>
+                    <small *ngIf="form['username'].errors?.['minlength']">Must be at least 3 characters</small>
+                </div>
+
+                <!-- Email Field -->
+                <input type="email" formControlName="email" placeholder="Email" required>
+                <div *ngIf="form['email'].invalid && (form['email'].dirty || submitted)" class="validation-error">
+                    <small *ngIf="form['email'].errors?.['required']">Email is required</small>
+                    <small *ngIf="form['email'].errors?.['email']">Invalid email format</small>
+                </div>
+
+                <!-- Password Field -->
+                <input type="password" formControlName="password" placeholder="Password" required>
+                <div *ngIf="form['password'].invalid && (form['password'].dirty || submitted)" class="validation-error">
+                    <small *ngIf="form['password'].errors?.['required']">Password is required</small>
+                    <small *ngIf="form['password'].errors?.['minlength']">Must be at least 6 characters</small>
+                </div>
+
+                <!-- Confirm Password Field -->
+                <input type="password" formControlName="confirmPassword" placeholder="Confirm Password" required>
+                <div *ngIf="form['confirmPassword'].invalid && (form['confirmPassword'].dirty || submitted)" class="validation-error">
+                    <small *ngIf="form['confirmPassword'].errors?.['required']">Confirm password is required</small>
+                    <small *ngIf="form['confirmPassword'].errors?.['mismatch']">Passwords do not match</small>
+                </div>
+
+                <button type="submit" [disabled]="registerForm.invalid">Register</button>
+            </form>
+
+            <!-- Login link -->
+            <p class="signup-text">
+                Already have an account? <a routerLink="/login">Login</a>
+            </p>
+        </div>
+    </div>
+</div>

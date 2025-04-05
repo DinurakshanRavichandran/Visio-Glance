@@ -1,0 +1,76 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Navbar Styling */
+header {
+    height: 65px; /* Lower height */
+    width: 100%;
+    background: #1a2b4c; /* Navy blue */
+    display: flex;
+    align-items: center;
+    padding: 0 40px;
+    border-bottom: 2px solid #0f1e38; /* Slightly darker navy */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Wrapper */
+.wrapper {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Logo */
+.logo {
+    font-size: 22px;
+    font-family: "Poppins", sans-serif; /* Modern, clean font */
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.logo .color {
+    color: #3f82e2; /* Stylish blue accent */
+}
+
+/* Navigation */
+nav ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+}
+
+nav ul li {
+    margin-left: 20px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #cfd8e3; /* Soft white-blue */
+    font-size: 14px;
+    font-family: "Poppins", sans-serif;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: color 0.3s ease-in-out;
+}
+
+nav ul li a:hover {
+    color: #3f82e2; /* Blue accent */
+}
+
+/* Sign Out Link */
+.signout {
+    color: #e74c3c; /* Soft red for signout */
+    font-weight: bold;
+}
+
+.signout:hover {
+    color: #ff6b5b;
+}
